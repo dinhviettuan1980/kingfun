@@ -1,3 +1,131 @@
+// Vẽ xấp xu gồm 3-5 đồng chồng lên nhau
+function addCoinStack(layer, cx, cy, zOrder) {
+    var count = 3 + Math.floor(Math.random() * 3); // 3-5 đồng
+    for (var i = 0; i < count; i++) {
+        var coin = new cc.Sprite("res/icon_free_gold.png");
+        coin.setScale(0.32);
+        coin.setPosition(cx + i * 5 - (count * 5) / 2, cy + i * 4);
+        coin.setRotation(-8 + i * 4);
+        layer.addChild(coin, (zOrder || 5) + i);
+    }
+}
+
+// Vẽ border cho button — tọa độ anchor button là (0.5,0.5) nên center là (0,0)
+function drawBtnBorder(btn, w, h, color) {
+    var node = new cc.DrawNode();
+    node.drawRect(cc.p(-w / 2, -h / 2), cc.p(w / 2, h / 2), null, 2, color);
+    btn.addChild(node, 1);
+}
+
+// Popup kết quả thắng/thua
+function showGamePopup(title, subtitle, isWin, onClose) {
+    var size = cc.winSize;
+    var overlay = new cc.LayerColor(new cc.Color(0, 0, 0, 180));
+    overlay.setContentSize(size.width, size.height);
+
+    var panelW = 560, panelH = 320;
+    var panel = new cc.LayerColor(new cc.Color(15, 15, 35, 250));
+    panel.setContentSize(panelW, panelH);
+    panel.x = (size.width - panelW) / 2;
+    panel.y = (size.height - panelH) / 2;
+
+    // Viền panel ngoài
+    var borderColor = isWin ? new cc.Color(255, 200, 0, 255) : new cc.Color(200, 60, 60, 255);
+    var outerBorder = new cc.DrawNode();
+    outerBorder.drawRect(cc.p(0, 0), cc.p(panelW, panelH), null, 3, borderColor);
+    panel.addChild(outerBorder);
+
+    // Đường kẻ trang trí bên trong (cách viền 5px)
+    var innerBorder = new cc.DrawNode();
+    innerBorder.drawRect(cc.p(8, 8), cc.p(panelW - 8, panelH - 8), null, 1,
+        new cc.Color(borderColor.r, borderColor.g, borderColor.b, 80));
+    panel.addChild(innerBorder);
+
+    // Tiêu đề
+    var titleLabel = new cc.LabelTTF(title, "Arial", 54);
+    titleLabel.x = panelW / 2;
+    titleLabel.y = panelH - 70;
+    titleLabel.setColor(isWin ? new cc.Color(255, 225, 50) : new cc.Color(255, 100, 100));
+    panel.addChild(titleLabel);
+
+    // Đường kẻ ngang dưới tiêu đề
+    var divider = new cc.DrawNode();
+    divider.drawSegment(cc.p(30, panelH - 105), cc.p(panelW - 30, panelH - 105), 1,
+        new cc.Color(borderColor.r, borderColor.g, borderColor.b, 120));
+    panel.addChild(divider);
+
+    // Số tiền
+    var subLabel = new cc.LabelTTF(subtitle, "Arial", 42);
+    subLabel.x = panelW / 2;
+    subLabel.y = panelH / 2 + 10;
+    subLabel.setColor(isWin ? new cc.Color(80, 255, 140) : new cc.Color(255, 160, 80));
+    panel.addChild(subLabel);
+
+    var btnW = 200, btnH = 65, btnGap = 24, btnY = 50;
+    // 2 nút đều 2 bên: tổng chiều rộng = btnW*2 + btnGap, căn giữa panel
+    var leftBtnX  = (panelW - btnW * 2 - btnGap) / 2 + btnW / 2;   // center nút trái
+    var rightBtnX = leftBtnX + btnW + btnGap;                         // center nút phải
+
+    // Nút Ván mới (xanh lá)
+    var newBtn = new ccui.Button();
+    newBtn.setTitleText("Ván mới");
+    newBtn.setTitleFontSize(30);
+    newBtn.setTitleColor(new cc.Color(255, 255, 255));
+    newBtn.setContentSize(cc.size(btnW, btnH));
+    newBtn.setAnchorPoint(cc.p(0.5, 0.5));
+    newBtn.setPosition(leftBtnX, btnY);
+    newBtn.setColor(new cc.Color(30, 120, 55));
+    newBtn.setOpacity(230);
+    panel.addChild(newBtn);
+
+    // Nút Thoát (đỏ)
+    var exitBtn = new ccui.Button();
+    exitBtn.setTitleText("Thoát");
+    exitBtn.setTitleFontSize(30);
+    exitBtn.setTitleColor(new cc.Color(255, 255, 255));
+    exitBtn.setContentSize(cc.size(btnW, btnH));
+    exitBtn.setAnchorPoint(cc.p(0.5, 0.5));
+    exitBtn.setPosition(rightBtnX, btnY);
+    exitBtn.setColor(new cc.Color(150, 35, 35));
+    exitBtn.setOpacity(230);
+    panel.addChild(exitBtn);
+
+    overlay.addChild(panel);
+
+    var touchListener = cc.EventListener.create({
+        event: cc.EventListener.TOUCH_ONE_BY_ONE,
+        swallowTouches: true,
+        onTouchBegan: function() { return true; }
+    });
+    cc.eventManager.addListener(touchListener, overlay);
+
+    panel.setScale(0.1);
+    panel.runAction(cc.scaleTo(0.15, 1.0));
+
+    function dismiss(cb) {
+        overlay.runAction(cc.sequence(
+            cc.fadeOut(0.1),
+            cc.callFunc(function() {
+                cc.eventManager.removeListener(touchListener);
+                overlay.removeFromParent();
+                if (cb) cb();
+            })
+        ));
+    }
+
+    newBtn.addClickEventListener(function() {
+        dismiss(onClose);
+    });
+
+    exitBtn.addClickEventListener(function() {
+        dismiss(function() {
+            cc.director.runScene(new LobbyScene());
+        });
+    });
+
+    cc.director.getRunningScene().addChild(overlay, 100);
+}
+
 // Hiệu ứng quân bài bay từ bộ bài đến vị trí người chơi
 function dealCard(layer, targetSprite, deckX, deckY) {
     var flying = new cc.Sprite(res.BackCard_png);
@@ -20,9 +148,10 @@ function dealCard(layer, targetSprite, deckX, deckY) {
     ));
 }
 
-// Hiệu ứng đồng tiền bay từ fromPos về toPos
-function showCoinsFly(layer, fromX, fromY, toX, toY, count) {
+// Hiệu ứng đồng tiền bay từ fromPos về toPos, gọi onDone sau khi đồng cuối hạ cánh
+function showCoinsFly(layer, fromX, fromY, toX, toY, count, onDone) {
     count = count || 8;
+    var done = 0;
     for (var i = 0; i < count; i++) {
         (function(idx) {
             var coin = new cc.Sprite("res/icon_free_gold.png");
@@ -33,7 +162,6 @@ function showCoinsFly(layer, fromX, fromY, toX, toY, count) {
             );
             layer.addChild(coin, 20);
 
-            // Bezier: cong qua điểm giữa lên trên rồi rơi xuống đích
             var midX = (fromX + toX) / 2 + (Math.random() * 160 - 80);
             var midY = Math.max(fromY, toY) + 180 + Math.random() * 100;
             var cp1 = cc.p(midX, midY);
@@ -46,7 +174,11 @@ function showCoinsFly(layer, fromX, fromY, toX, toY, count) {
                     cc.rotateBy(0.55, 360 + Math.random() * 180)
                 ),
                 cc.scaleTo(0.12, 0),
-                cc.callFunc(function() { coin.removeFromParent(); })
+                cc.callFunc(function() {
+                    coin.removeFromParent();
+                    done++;
+                    if (done === count && onDone) onDone();
+                })
             ));
         })(i);
     }
@@ -102,6 +234,7 @@ var HelloWorldLayer = cc.Layer.extend({
 
         this.me = new Player("1", cc.sys.localStorage.getItem("inputUsername"), [], true);
         this.firstLoad = 1;
+        this.dealerKey = 'me'; // người đầu tiên được chia bài
 
         var tableSprite = new cc.Sprite("res/icon_free_gold.png");
         tableSprite.attr({ x: size.width / 2 - 610, y: size.height / 2 + 280 });
@@ -115,7 +248,7 @@ var HelloWorldLayer = cc.Layer.extend({
         this.addChild(tableLabel, 6);
 
         // Bộ bài ở giữa bàn — hiện khi chia, ẩn sau khi chia xong
-        this.deckX = size.width / 2 - 50;
+        this.deckX = size.width / 2;
         this.deckY = size.height / 2 + 20;
         this.deckSprites = [];
         for (var d = 4; d >= 0; d--) {
@@ -221,9 +354,11 @@ var HelloWorldLayer = cc.Layer.extend({
         this.addChild(meLabel, 6);
 
         var meAmountLabel = new cc.LabelTTF(this.me.wallet_money, "Arial", 20);
-        meAmountLabel.x = size.width / 2 + 100;
+        meAmountLabel.x = size.width / 2 + 120;
         meAmountLabel.y = size.height / 2 - 300;
         this.addChild(meAmountLabel, 5);
+
+        addCoinStack(this, size.width / 2 + 60, size.height / 2 - 300, 5);
 
         this.MeAvatarSprite1 = new cc.Sprite(randomAvatar(true));
         this.MeAvatarSprite1.attr({ x: size.width / 2, y: size.height / 2 - 280 });
@@ -400,9 +535,11 @@ var HelloWorldLayer = cc.Layer.extend({
                         thiz.addChild(player1Label, 5);
 
                         thiz.player1AmountLabel = new cc.LabelTTF(thiz.player1.wallet_money, "Arial", 20);
-                        thiz.player1AmountLabel.x = size.width / 2 + 100;
+                        thiz.player1AmountLabel.x = size.width / 2 + 120;
                         thiz.player1AmountLabel.y = size.height / 2 + 250;
                         thiz.addChild(thiz.player1AmountLabel, 5);
+
+                        addCoinStack(thiz, size.width / 2 + 60, size.height / 2 + 250, 5);
 
                         thiz.PlayerAvatarSprite1 = new cc.Sprite(randomAvatar(thiz.player1.isEnable));
                         thiz.PlayerAvatarSprite1.attr({ x: size.width / 2, y: size.height / 2 + 280 });
@@ -426,9 +563,11 @@ var HelloWorldLayer = cc.Layer.extend({
                         thiz.addChild(player2Label, 5);
 
                         thiz.player2AmountLabel = new cc.LabelTTF(thiz.player2.wallet_money, "Arial", 20);
-                        thiz.player2AmountLabel.x = size.width / 2 - 300;
+                        thiz.player2AmountLabel.x = size.width / 2 - 280;
                         thiz.player2AmountLabel.y = size.height / 2 + 90;
                         thiz.addChild(thiz.player2AmountLabel, 5);
+
+                        addCoinStack(thiz, size.width / 2 - 340, size.height / 2 + 90, 5);
 
                         thiz.Player2AvatarSprite1 = new cc.Sprite(randomAvatar(thiz.player2.isEnable));
                         thiz.Player2AvatarSprite1.attr({ x: size.width / 2 - 400, y: size.height / 2 + 120 });
@@ -450,9 +589,11 @@ var HelloWorldLayer = cc.Layer.extend({
                         thiz.addChild(player3Label, 5);
 
                         thiz.player3AmountLabel = new cc.LabelTTF(thiz.player3.wallet_money, "Arial", 20);
-                        thiz.player3AmountLabel.x = size.width / 2 + 500;
+                        thiz.player3AmountLabel.x = size.width / 2 + 520;
                         thiz.player3AmountLabel.y = size.height / 2 + 90;
                         thiz.addChild(thiz.player3AmountLabel, 5);
+
+                        addCoinStack(thiz, size.width / 2 + 460, size.height / 2 + 90, 5);
 
                         thiz.Player3AvatarSprite1 = new cc.Sprite(randomAvatar(thiz.player3.isEnable));
                         thiz.Player3AvatarSprite1.attr({ x: size.width / 2 + 400, y: size.height / 2 + 120 });
@@ -465,38 +606,45 @@ var HelloWorldLayer = cc.Layer.extend({
                 cc.delayTime(1 * thiz.firstLoad),
                 cc.callFunc(function() {
                     thiz.firstLoad = 0;
-                    statusLabel.setVisible(true);
-                    statusLabel.setString("Chia bài...");
+                    statusLabel.setVisible(false);
                     // Hiện bộ bài
                     for (var d = 0; d < thiz.deckSprites.length; d++) {
                         thiz.deckSprites[d].setVisible(true);
                     }
                 }),
-                // Deal cards animation — mỗi lá bay từ bộ bài đến người chơi
+                // Deal cards animation — thứ tự xoay chiều kim đồng hồ bắt đầu từ người thắng ván trước
                 cc.delayTime(0.4),
-                cc.callFunc(function() { dealCard(thiz, thiz.MeSprite1, thiz.deckX, thiz.deckY); }),
-                cc.delayTime(0.45),
-                cc.callFunc(function() { if (thiz.player3.isEnable) dealCard(thiz, thiz.PlayerSprite31, thiz.deckX, thiz.deckY); }),
-                cc.delayTime(0.45),
-                cc.callFunc(function() { if (thiz.player1.isEnable) dealCard(thiz, thiz.PlayerSprite11, thiz.deckX, thiz.deckY); }),
-                cc.delayTime(0.45),
-                cc.callFunc(function() { if (thiz.player2.isEnable) dealCard(thiz, thiz.PlayerSprite21, thiz.deckX, thiz.deckY); }),
-                cc.delayTime(0.45),
-                cc.callFunc(function() { dealCard(thiz, thiz.MeSprite2, thiz.deckX, thiz.deckY); }),
-                cc.delayTime(0.45),
-                cc.callFunc(function() { if (thiz.player3.isEnable) dealCard(thiz, thiz.PlayerSprite32, thiz.deckX, thiz.deckY); }),
-                cc.delayTime(0.45),
-                cc.callFunc(function() { if (thiz.player1.isEnable) dealCard(thiz, thiz.PlayerSprite12, thiz.deckX, thiz.deckY); }),
-                cc.delayTime(0.45),
-                cc.callFunc(function() { if (thiz.player2.isEnable) dealCard(thiz, thiz.PlayerSprite22, thiz.deckX, thiz.deckY); }),
-                cc.delayTime(0.45),
-                cc.callFunc(function() { dealCard(thiz, thiz.MeSprite3, thiz.deckX, thiz.deckY); }),
-                cc.delayTime(0.45),
-                cc.callFunc(function() { if (thiz.player3.isEnable) dealCard(thiz, thiz.PlayerSprite33, thiz.deckX, thiz.deckY); }),
-                cc.delayTime(0.45),
-                cc.callFunc(function() { if (thiz.player1.isEnable) dealCard(thiz, thiz.PlayerSprite13, thiz.deckX, thiz.deckY); }),
-                cc.delayTime(0.45),
-                cc.callFunc(function() { if (thiz.player2.isEnable) dealCard(thiz, thiz.PlayerSprite23, thiz.deckX, thiz.deckY); }),
+                cc.callFunc(function() {
+                    // Thứ tự cố định theo chiều kim đồng hồ: me(dưới)→p3(phải)→p1(trên)→p2(trái)
+                    var clockwise = [
+                        { key: 'me', sprites: [thiz.MeSprite1, thiz.MeSprite2, thiz.MeSprite3],             isEnable: true },
+                        { key: 'p3', sprites: [thiz.PlayerSprite31, thiz.PlayerSprite32, thiz.PlayerSprite33], isEnable: thiz.player3.isEnable },
+                        { key: 'p1', sprites: [thiz.PlayerSprite11, thiz.PlayerSprite12, thiz.PlayerSprite13], isEnable: thiz.player1.isEnable },
+                        { key: 'p2', sprites: [thiz.PlayerSprite21, thiz.PlayerSprite22, thiz.PlayerSprite23], isEnable: thiz.player2.isEnable },
+                    ];
+                    var startIdx = 0;
+                    for (var i = 0; i < clockwise.length; i++) {
+                        if (clockwise[i].key === thiz.dealerKey) { startIdx = i; break; }
+                    }
+                    var ordered = clockwise.slice(startIdx).concat(clockwise.slice(0, startIdx));
+
+                    // Build sequence: 3 vòng, mỗi vòng chia 1 lá cho từng người enabled
+                    var dealSteps = [];
+                    for (var round = 0; round < 3; round++) {
+                        for (var p = 0; p < ordered.length; p++) {
+                            if (ordered[p].isEnable) {
+                                (function(sprite) {
+                                    dealSteps.push(cc.callFunc(function() {
+                                        dealCard(thiz, sprite, thiz.deckX, thiz.deckY);
+                                    }));
+                                    dealSteps.push(cc.delayTime(0.45));
+                                })(ordered[p].sprites[round]);
+                            }
+                        }
+                    }
+                    thiz.runAction(cc.sequence(dealSteps));
+                }),
+                cc.delayTime(0.45 * 12 + 0.4), // chờ deal xong (worst case 4 người x 3 vòng)
                 cc.delayTime(0.6),
                 cc.callFunc(function() {
                     // Ẩn bộ bài sau khi chia xong
@@ -526,8 +674,12 @@ var HelloWorldLayer = cc.Layer.extend({
                 cc.delayTime(1), cc.callFunc(function() { statusLabel.setString(4); }),
                 cc.delayTime(1), cc.callFunc(function() { statusLabel.setString(3); }),
                 cc.delayTime(1), cc.callFunc(function() { statusLabel.setString(2); }),
-                cc.delayTime(1), cc.callFunc(function() { statusLabel.setString(1); }),
-                cc.delayTime(1), cc.callFunc(function() { statusLabel.setString(0); }),
+                cc.delayTime(1), cc.callFunc(function() {
+                    statusLabel.setString(1);
+                }),
+                cc.delayTime(1), cc.callFunc(function() {
+                    statusLabel.setVisible(false);
+                }),
                 // Reveal all cards
                 cc.callFunc(function() {
                     if (thiz.player1.isEnable) {
@@ -579,38 +731,60 @@ var HelloWorldLayer = cc.Layer.extend({
                     else if (thiz.player3 == win) winPos = posP3;
 
                     // Bắn tiền từ người thua về người thắng
+                    // Đếm số nhóm để biết khi nào tất cả xong mới hiện popup
+                    var coinGroups = 0;
+                    if (thiz.me != win) coinGroups++;
+                    if (thiz.player1.isEnable && thiz.player1 != win) coinGroups++;
+                    if (thiz.player2.isEnable && thiz.player2 != win) coinGroups++;
+                    if (thiz.player3.isEnable && thiz.player3 != win) coinGroups++;
+
+                    var coinGroupsDone = 0;
+                    function onGroupDone() {
+                        coinGroupsDone++;
+                        if (coinGroupsDone === coinGroups) {
+                            showGamePopup(msg1, msg2, isWinMe, function() {
+                                startBtn.setVisible(true);
+                            });
+                        }
+                    }
+
                     if (thiz.me != win)
-                        showCoinsFly(thiz, posMe.x, posMe.y, winPos.x, winPos.y, 8);
+                        showCoinsFly(thiz, posMe.x, posMe.y, winPos.x, winPos.y, 8, onGroupDone);
                     if (thiz.player1.isEnable && thiz.player1 != win)
-                        showCoinsFly(thiz, posP1.x, posP1.y, winPos.x, winPos.y, 8);
+                        showCoinsFly(thiz, posP1.x, posP1.y, winPos.x, winPos.y, 8, onGroupDone);
                     if (thiz.player2.isEnable && thiz.player2 != win)
-                        showCoinsFly(thiz, posP2.x, posP2.y, winPos.x, winPos.y, 8);
+                        showCoinsFly(thiz, posP2.x, posP2.y, winPos.x, winPos.y, 8, onGroupDone);
                     if (thiz.player3.isEnable && thiz.player3 != win)
-                        showCoinsFly(thiz, posP3.x, posP3.y, winPos.x, winPos.y, 8);
+                        showCoinsFly(thiz, posP3.x, posP3.y, winPos.x, winPos.y, 8, onGroupDone);
+
+                    // Nếu thắng với 10 điểm thì nhân đôi
+                    var isDouble = (win.total_points === 10);
+                    var multiplier = isDouble ? 2 : 1;
+                    var betPerPerson = thiz.bet_amount * multiplier;
 
                     if (thiz.me == win) {
-                        thiz.me.addBudget(thiz.bet_amount * numPlaying);
-                        thiz.player1.minusBudget(thiz.bet_amount);
-                        thiz.player2.minusBudget(thiz.bet_amount);
-                        thiz.player3.minusBudget(thiz.bet_amount);
+                        thiz.me.addBudget(betPerPerson * numPlaying);
+                        thiz.player1.minusBudget(betPerPerson);
+                        thiz.player2.minusBudget(betPerPerson);
+                        thiz.player3.minusBudget(betPerPerson);
                         thiz.MeAvatarWinSprite1.setVisible(true);
                     } else if (thiz.player1 == win) {
-                        thiz.player1.addBudget(thiz.bet_amount * numPlaying);
-                        thiz.me.minusBudget(thiz.bet_amount);
-                        thiz.player2.minusBudget(thiz.bet_amount);
-                        thiz.player3.minusBudget(thiz.bet_amount);
+                        thiz.player1.addBudget(betPerPerson * numPlaying);
+                        thiz.me.minusBudget(betPerPerson);
+                        thiz.player2.minusBudget(betPerPerson);
+                        thiz.player3.minusBudget(betPerPerson);
                         thiz.PlayerAvatarWinSprite1.setVisible(true);
                     } else if (thiz.player2 == win) {
-                        thiz.player2.addBudget(thiz.bet_amount * numPlaying);
-                        thiz.me.minusBudget(thiz.bet_amount);
-                        thiz.player1.minusBudget(thiz.bet_amount);
-                        thiz.player3.minusBudget(thiz.bet_amount);
+                        thiz.player2.addBudget(betPerPerson * numPlaying);
+                        thiz.me.minusBudget(betPerPerson);
+                        thiz.player1.minusBudget(betPerPerson);
+                        thiz.player3.minusBudget(betPerPerson);
                         thiz.Player2AvatarWinSprite1.setVisible(true);
                     } else if (thiz.player3 == win) {
-                        thiz.player3.addBudget(thiz.bet_amount * numPlaying);
-                        thiz.me.minusBudget(thiz.bet_amount);
-                        thiz.player1.minusBudget(thiz.bet_amount);
-                        thiz.player2.minusBudget(thiz.bet_amount);
+                        thiz.player3.addBudget(betPerPerson * numPlaying);
+                        thiz.me.minusBudget(betPerPerson);
+                        thiz.player1.minusBudget(betPerPerson);
+                        thiz.player2.minusBudget(betPerPerson);
                         if (thiz.player3.isEnable) thiz.Player3AvatarWinSprite1.setVisible(true);
                     }
 
@@ -619,20 +793,24 @@ var HelloWorldLayer = cc.Layer.extend({
                     if (thiz.player2.isEnable) thiz.player2AmountLabel.setString(thiz.player2.wallet_money);
                     if (thiz.player3.isEnable) thiz.player3AmountLabel.setString(thiz.player3.wallet_money);
 
-                    statusLabel.setVisible(true);
-                    statusLabel.setString(win.name + " thắng " + (thiz.bet_amount * numPlaying));
-
                     cc.sys.localStorage.setItem(thiz.player1.name + "_wallet", thiz.player1.wallet_money);
                     cc.sys.localStorage.setItem(thiz.me.name + "_wallet", thiz.me.wallet_money);
                     cc.sys.localStorage.setItem(thiz.player2.name + "_wallet", thiz.player2.wallet_money);
                     cc.sys.localStorage.setItem(thiz.player3.name + "_wallet", thiz.player3.wallet_money);
 
                     thiz.isPlaying = false;
-                }),
-                cc.delayTime(4),
-                cc.callFunc(function() {
-                    startBtn.setVisible(true);
-                    statusLabel.setVisible(false);
+
+                    // Ván sau dealer là người thắng
+                    if      (win === thiz.me)       thiz.dealerKey = 'me';
+                    else if (win === thiz.player1)  thiz.dealerKey = 'p1';
+                    else if (win === thiz.player2)  thiz.dealerKey = 'p2';
+                    else if (win === thiz.player3)  thiz.dealerKey = 'p3';
+
+                    var isWinMe = (thiz.me == win);
+                    var prize   = betPerPerson * numPlaying;
+                    var doubleTag = isDouble ? " (x2)" : "";
+                    var msg1    = isWinMe ? "Bạn thắng!" : (win.name + " thắng!");
+                    var msg2    = (isWinMe ? "+" : "-") + (isWinMe ? prize : betPerPerson) + " xu" + doubleTag;
                 })
             ));
         }.bind(this));
