@@ -66,11 +66,7 @@ let KFManager = {
     getUpdate: function(cb) {
 		cc.log("==============>","TEST KFManager 3",cc.sys.isNative);
         if(!cc.sys.isNative){
-            this.loadScripts(["src/jsList.js"], target, function() {
-                cc.LoaderScene.preload(g_resources, function() {
-                    cc.director.runScene(new LoginScene());
-                }, this);
-            });
+            cb.call(this, true, "{}");
         }else
             {
                 cc.log("==============>","TEST KFManager 3x1");
