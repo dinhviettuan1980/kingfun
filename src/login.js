@@ -12,15 +12,79 @@ var LoginLayer = cc.Layer.extend({
         // ask the window size
         var size = cc.winSize;
 
-        var statusLabel = new cc.LabelTTF("Bạn đã sẵn sàng?", "Arial", 38);
-        // position the label on the center of the screen
-        statusLabel.x = size.width / 2 + 100;
-        statusLabel.y = size.height / 2 + 300;
-        statusLabel.setVisible(false);
+        // --- Popup helper ---
+        var showPopup = function(message, onClose) {
+            // Dim overlay
+            var overlay = new cc.LayerColor(new cc.Color(0, 0, 0, 160));
+            overlay.setContentSize(size.width, size.height);
 
-        // add the label as a child to this layer
-        this.addChild(statusLabel, 6);  
+            // Panel nền trắng
+            var panelW = 600, panelH = 260;
+            var panel = new cc.LayerColor(new cc.Color(30, 30, 30, 240));
+            panel.setContentSize(panelW, panelH);
+            panel.x = (size.width - panelW) / 2;
+            panel.y = (size.height - panelH) / 2;
 
+            // Viền vàng
+            var border = new cc.DrawNode();
+            border.drawRect(
+                cc.p(0, 0), cc.p(panelW, panelH),
+                null, 3, new cc.Color(212, 175, 55, 255)
+            );
+            panel.addChild(border);
+
+            // Message label
+            var label = new cc.LabelTTF(message, "Arial", 40);
+            label.x = panelW / 2;
+            label.y = panelH / 2 + 30;
+            label.setColor(new cc.Color(255, 230, 80));
+            panel.addChild(label);
+
+            // Nút Close
+            var closeBtn = new ccui.Button();
+            closeBtn.setTitleText("Đóng");
+            closeBtn.setTitleFontSize(34);
+            closeBtn.setTitleColor(new cc.Color(255, 255, 255));
+            closeBtn.setContentSize(cc.size(180, 70));
+            closeBtn.setNormalizedPosition(cc.p(0.5, 0));
+            closeBtn.y = 55;
+            closeBtn.x = panelW / 2;
+
+            // Nền nút đỏ/cam
+            closeBtn.setColor(new cc.Color(200, 60, 40));
+            closeBtn.setOpacity(230);
+
+            panel.addChild(closeBtn);
+            overlay.addChild(panel);
+
+            // Chặn touch xuyên qua overlay
+            var touchListener = cc.EventListener.create({
+                event: cc.EventListener.TOUCH_ONE_BY_ONE,
+                swallowTouches: true,
+                onTouchBegan: function() { return true; }
+            });
+            cc.eventManager.addListener(touchListener, overlay);
+
+            overlay.addChild = overlay.addChild.bind(overlay);
+
+            // Hiệu ứng scale-in
+            panel.setScale(0.1);
+            panel.runAction(cc.scaleTo(0.15, 1.0));
+
+            closeBtn.addClickEventListener(function() {
+                overlay.runAction(cc.sequence(
+                    cc.fadeOut(0.1),
+                    cc.callFunc(function() {
+                        cc.eventManager.removeListener(touchListener);
+                        overlay.removeFromParent();
+                        if (onClose) onClose();
+                    })
+                ));
+            });
+
+            // Thêm vào scene hiện tại
+            cc.director.getRunningScene().addChild(overlay, 100);
+        };
 
         var bg = this._bg = new cc.Sprite("res/LoginBng.png")
         bg.scale = 1.1; //ratioAssetScale(this.getContentSize());
@@ -82,16 +146,16 @@ var LoginLayer = cc.Layer.extend({
         startBtn.addClickEventListener( function() {
 
             if (inputUsername.getString().trim() == '') {
-                statusLabel.setVisible(true);
-                statusLabel.setString("Mời bạn nhập tên!");
-
+                showPopup("Mời bạn nhập tên!", function() {
+                    inputUsername.setFocused(true);
+                });
                 return;
             }
 
             if (inputUsername.getString().trim().length > 10) {
-                statusLabel.setVisible(true);
-                statusLabel.setString("Tên bạn quá dài!");
-
+                showPopup("Tên bạn quá dài!", function() {
+                    inputUsername.setFocused(true);
+                });
                 return;
             }
 
