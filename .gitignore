@@ -1,0 +1,33 @@
+# Cocos2d-x engine (quá lớn, download riêng)
+frameworks/cocos2d-html5/
+frameworks/cocos2d-x/
+
+# Android build (1.5GB)
+frameworks/runtime-src/proj.android/
+
+# Other platforms không dùng
+frameworks/runtime-src/proj.linux/
+frameworks/runtime-src/proj.win32/
+
+# Xcode DerivedData / build artifacts
+*.xcuserstate
+xcuserdata/
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Cocos2d-x precompiled headers
+*.pch.d
+
+# Node / npm
+node_modules/
+
+# Logs
+*.log
