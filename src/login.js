@@ -162,7 +162,7 @@ var LoginLayer = cc.Layer.extend({
             cc.sys.localStorage.setItem("inputUsername", inputUsername.getString().trim());
             cc.sys.localStorage.setItem("inputPassword", inputPassword.getString().trim());
 
-            cc.director.runScene(new LobbyScene());
+            cc.director.runScene(new GameSelectScene());
 
             // try {
             //     // try to call a post method

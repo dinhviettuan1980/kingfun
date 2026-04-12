@@ -1,3 +1,7 @@
+if (typeof playSound === 'undefined') {
+    window.playSound = function(path, loop) { try { if (cc.audioEngine) cc.audioEngine.playEffect(path, loop || false); } catch(e) {} };
+}
+
 // Vẽ xấp xu gồm 3-5 đồng chồng lên nhau
 function addCoinStack(layer, cx, cy, zOrder) {
     var count = 3 + Math.floor(Math.random() * 3); // 3-5 đồng
@@ -399,7 +403,7 @@ var HelloWorldLayer = cc.Layer.extend({
         var cardTouchListener = cc.EventListener.create({
             event: cc.EventListener.TOUCH_ONE_BY_ONE,
             swallowTouches: false,
-            onTouchBegan: function(touch, event) {
+            onTouchBegan: function(touch) {
                 if (flipped) return false;
                 var pos = touch.getLocation();
                 var sprites = [thiz.MeSprite1, thiz.MeSprite2, thiz.MeSprite3];
@@ -607,7 +611,7 @@ var HelloWorldLayer = cc.Layer.extend({
                 cc.callFunc(function() {
                     thiz.firstLoad = 0;
                     statusLabel.setVisible(false);
-                    // Hiện bộ bài
+                    // Hiện bộ bài + bắt đầu tiếng chia bài
                     for (var d = 0; d < thiz.deckSprites.length; d++) {
                         thiz.deckSprites[d].setVisible(true);
                     }
@@ -738,6 +742,9 @@ var HelloWorldLayer = cc.Layer.extend({
                     if (thiz.player2.isEnable && thiz.player2 != win) coinGroups++;
                     if (thiz.player3.isEnable && thiz.player3 != win) coinGroups++;
 
+                    // Phát tiếng thắng/thua ngay khi biết kết quả
+                    playSound(isWinMe ? res.SFX_Win : res.SFX_Lose);
+
                     var coinGroupsDone = 0;
                     function onGroupDone() {
                         coinGroupsDone++;
@@ -747,6 +754,9 @@ var HelloWorldLayer = cc.Layer.extend({
                             });
                         }
                     }
+
+                    if (coinGroups > 0)
+                        playSound(res.SFX_CoinFly);
 
                     if (thiz.me != win)
                         showCoinsFly(thiz, posMe.x, posMe.y, winPos.x, winPos.y, 8, onGroupDone);
