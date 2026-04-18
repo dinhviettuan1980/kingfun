@@ -11,5 +11,6 @@ var jsList = [
     "src/tala.js",
     "src/tictactoe.js",
     "src/carogame.js",
+    "src/govay.js",
     "src/base64.js"
 ]

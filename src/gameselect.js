@@ -104,10 +104,18 @@ var MiniGamesLayer = cc.Layer.extend({
 
         // Cờ Caro
         var caroBtn = this._makeBtn("Cờ Caro", new cc.Color(120, 60, 160));
-        caroBtn.setPosition(cx, cy - 80);
+        caroBtn.setPosition(cx, cy - 60);
         this.addChild(caroBtn, 6);
         caroBtn.addClickEventListener(function() {
             cc.director.runScene(new CaroScene());
+        });
+
+        // Cờ Vây
+        var goBtn = this._makeBtn("Cờ Vây", new cc.Color(160, 100, 20));
+        goBtn.setPosition(cx, cy - 185);
+        this.addChild(goBtn, 6);
+        goBtn.addClickEventListener(function() {
+            cc.director.runScene(new GoScene());
         });
 
         // Back về GameSelect
