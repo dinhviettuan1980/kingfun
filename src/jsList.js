@@ -9,5 +9,7 @@ var jsList = [
     "src/game.js",
     "src/gameselect.js",
     "src/tala.js",
+    "src/tictactoe.js",
+    "src/carogame.js",
     "src/base64.js"
 ]
