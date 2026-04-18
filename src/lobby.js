@@ -11,49 +11,39 @@ var LobbyLayer = cc.Layer.extend({
         bg.y = size.height / 2;
         this.addChild(bg);
 
+        var cx = size.width / 2, cy = size.height / 2;
+
         var statusLabel = new cc.LabelTTF(
             "Xin chào " + cc.sys.localStorage.getItem("inputUsername") + ", mời bạn chọn bàn!",
             "Arial", 48
         );
-        statusLabel.x = size.width / 2 + 200;
-        statusLabel.y = size.height / 2 + 180;
+        statusLabel.x = cx;
+        statusLabel.y = cy + 220;
         this.addChild(statusLabel, 6);
 
-        var btn1 = createBtn("50");
-        btn1.setPosition(size.width / 2 + 100, size.height / 2 + 50);
-        this.addChild(btn1, 7);
-        btn1.addClickEventListener(function() {
-            cc.sys.localStorage.setItem("bet_amount", 50);
-            cc.director.runScene(new HelloWorldScene());
-        });
-
-        var btn2 = createBtn("100");
-        btn2.setPosition(size.width / 2 + 400, size.height / 2 + 50);
-        this.addChild(btn2, 7);
-        btn2.addClickEventListener(function() {
-            cc.sys.localStorage.setItem("bet_amount", 100);
-            cc.director.runScene(new HelloWorldScene());
-        });
-
-        var btn3 = createBtn("200");
-        btn3.setPosition(size.width / 2 + 100, size.height / 2 - 150);
-        this.addChild(btn3, 7);
-        btn3.addClickEventListener(function() {
-            cc.sys.localStorage.setItem("bet_amount", 200);
-            cc.director.runScene(new HelloWorldScene());
-        });
-
-        var btn4 = createBtn("500");
-        btn4.setPosition(size.width / 2 + 400, size.height / 2 - 150);
-        this.addChild(btn4, 7);
-        btn4.addClickEventListener(function() {
-            cc.sys.localStorage.setItem("bet_amount", 500);
-            cc.director.runScene(new HelloWorldScene());
-        });
+        // 4 nút cược xếp 2×2, canh giữa màn hình
+        var gapX = 240, gapY = 150;
+        var positions = [
+            { x: cx - gapX, y: cy + 60,      amount: 50  },
+            { x: cx + gapX, y: cy + 60,      amount: 100 },
+            { x: cx - gapX, y: cy - gapY + 60, amount: 200 },
+            { x: cx + gapX, y: cy - gapY + 60, amount: 500 }
+        ];
+        for (var i = 0; i < positions.length; i++) {
+            (function(p) {
+                var btn = createBtn(String(p.amount));
+                btn.setPosition(p.x, p.y);
+                btn.addClickEventListener(function() {
+                    cc.sys.localStorage.setItem("bet_amount", p.amount);
+                    cc.director.runScene(new HelloWorldScene());
+                });
+                this.addChild(btn, 7);
+            }).call(this, positions[i]);
+        }
 
         var backBtn = new ccui.Button(res.Back_png, "", "");
-        backBtn.x = size.width / 2 + 600;
-        backBtn.y = size.height / 2 + 270;
+        backBtn.x = size.width - 80;
+        backBtn.y = size.height - 60;
         backBtn.scale = 1;
         backBtn.setZoomScale(-0.05);
         this.addChild(backBtn, 7);
@@ -62,8 +52,8 @@ var LobbyLayer = cc.Layer.extend({
         });
 
         var helpBtn = new ccui.Button(res.Help_png, "", "");
-        helpBtn.x = size.width / 2 + 500;
-        helpBtn.y = size.height / 2 + 270;
+        helpBtn.x = size.width - 180;
+        helpBtn.y = size.height - 60;
         helpBtn.scale = 1.5;
         helpBtn.setZoomScale(-0.05);
         this.addChild(helpBtn, 7);

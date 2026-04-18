@@ -10,15 +10,17 @@ var GameSelectLayer = cc.Layer.extend({
         bg.y = size.height / 2;
         this.addChild(bg);
 
+        var cx = size.width / 2, cy = size.height / 2;
+
         var title = new cc.LabelTTF("Chọn trò chơi", "Arial", 52);
-        title.x = size.width / 2;
-        title.y = size.height / 2 + 200;
+        title.x = cx;
+        title.y = cy + 200;
         title.setColor(new cc.Color(255, 225, 50));
         this.addChild(title, 5);
 
         // Nút Ba Cây
         var bacayBtn = this._makeBtn("Ba Cây", new cc.Color(30, 100, 180));
-        bacayBtn.setPosition(size.width / 2 - 200, size.height / 2);
+        bacayBtn.setPosition(cx - 200, cy);
         this.addChild(bacayBtn, 6);
         bacayBtn.addClickEventListener(function() {
             cc.director.runScene(new LobbyScene());
@@ -26,7 +28,7 @@ var GameSelectLayer = cc.Layer.extend({
 
         // Nút Tá Lả
         var talaBtn = this._makeBtn("Tá Lả", new cc.Color(160, 50, 30));
-        talaBtn.setPosition(size.width / 2 + 200, size.height / 2);
+        talaBtn.setPosition(cx + 200, cy);
         this.addChild(talaBtn, 6);
         talaBtn.addClickEventListener(function() {
             cc.director.runScene(new TaLaScene());
@@ -34,8 +36,8 @@ var GameSelectLayer = cc.Layer.extend({
 
         // Nút thoát về login
         var backBtn = new ccui.Button(res.Back_png, "", "");
-        backBtn.x = size.width / 2 + 600;
-        backBtn.y = size.height / 2 + 270;
+        backBtn.x = size.width - 80;
+        backBtn.y = size.height - 60;
         backBtn.scale = 1;
         backBtn.setZoomScale(-0.05);
         this.addChild(backBtn, 6);
