@@ -1,6 +1,9 @@
 var jsList = [
     "src/resource.js",
+    "src/settings.js",
     "src/models.js",
+    "src/facebook.js",
+    "src/google.js",
     "src/login.js",
     "src/forgot.js",
     "src/register.js",

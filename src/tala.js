@@ -919,12 +919,22 @@ var TaLaLayer = cc.Layer.extend({
             rowY -= 64;
         });
 
-        var btnNew  = this._makeBtn('Ván mới', new cc.Color(30,120,50));
-        var btnExit = this._makeBtn('Thoát',   new cc.Color(160,50,30));
-        btnNew.x  = pW/2 - 100; btnNew.y  = 46;
-        btnExit.x = pW/2 + 100; btnExit.y = 46;
+        var btnNew   = this._makeBtn('Ván mới',  new cc.Color(30,120,50));
+        var btnExit  = this._makeBtn('Thoát',    new cc.Color(160,50,30));
+        var btnShare = this._makeBtn('Chia sẻ', new cc.Color(24,119,242));
+        btnNew.x   = pW/2 - 200; btnNew.y   = 46;
+        btnExit.x  = pW/2 + 200; btnExit.y  = 46;
+        btnShare.x = pW/2;       btnShare.y  = 46;
         panel.addChild(btnNew);
         panel.addChild(btnExit);
+        panel.addChild(btnShare);
+
+        var winnerName = ranked[0].name;
+        var shareText  = 'Tôi vừa chơi Tá Lả trên KingFun!\n'
+                       + winnerName + ' thang van nay!\n'
+                       + ranked.map(function(r){ return r.name + ': ' + r.amount; }).join(' | ');
+
+        btnShare.addClickEventListener(function() { FB.share(shareText); });
         btnNew.addClickEventListener(function() {
             overlay.removeFromParent();
             flyCoinsToWinner(function() {

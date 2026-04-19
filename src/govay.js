@@ -13,13 +13,16 @@ var GoLayer = cc.Layer.extend({
         bg.scale = 1.1; bg.x = cx; bg.y = cy;
         this.addChild(bg);
 
-        var title = new cc.LabelTTF('Cờ Vây 9×9', 'Arial', 48);
-        title.setPosition(cx, cy + 270);
-        title.setColor(new cc.Color(255, 225, 50));
-        this.addChild(title, 5);
+        // Board
+        this.N    = 9;
+        this.CELL = 70;
+        var span  = this.CELL * (this.N - 1);
+        this.bx   = size.width - span - 35;
+        this.by   = Math.round((size.height - span) / 2);
+        var lx    = Math.round(this.bx / 2);
 
         var backBtn = new ccui.Button(res.Back_png, '', '');
-        backBtn.x = size.width - 80; backBtn.y = size.height - 60;
+        backBtn.x = 80; backBtn.y = size.height - 50;
         backBtn.scale = 1; backBtn.setZoomScale(-0.05);
         this.addChild(backBtn, 6);
         backBtn.addClickEventListener(function() {
@@ -27,12 +30,11 @@ var GoLayer = cc.Layer.extend({
             cc.director.runScene(new MiniGamesScene());
         });
 
-        // Board
-        this.N    = 9;
-        this.CELL = 46;
-        var span  = this.CELL * (this.N - 1);
-        this.bx   = cx - span / 2;
-        this.by   = cy - span / 2 - 10;
+        var title = new cc.LabelTTF(L('go_title'), 'Arial', 48);
+        title.setPosition(lx, size.height - 50);
+        title.setColor(new cc.Color(255, 225, 50));
+        this.addChild(title, 5);
+
         this._drawBoard();
 
         // State
@@ -43,28 +45,28 @@ var GoLayer = cc.Layer.extend({
         this.prevBoard  = null;
         this.gameOver   = false;
         this.passes     = 0;
-        this.turn       = 1; // 1=Đen(người) 2=Trắng(máy)
+        this.turn       = 1;
 
-        this.statusLbl = new cc.LabelTTF('Bạn đi Đen  —  Máy đi Trắng', 'Arial', 28);
-        this.statusLbl.setPosition(cx, this.by - 42);
+        this.statusLbl = new cc.LabelTTF(L('go_status'), 'Arial', 28);
+        this.statusLbl.setPosition(lx, cy + 70);
         this.statusLbl.setColor(new cc.Color(255, 240, 120));
         this.addChild(this.statusLbl, 5);
 
-        this.capLbl = new cc.LabelTTF('Đen bắt: 0   Trắng bắt: 0', 'Arial', 24);
-        this.capLbl.setPosition(cx, this.by - 76);
+        this.capLbl = new cc.LabelTTF(L('go_cap').replace('{b}','0').replace('{w}','0'), 'Arial', 24);
+        this.capLbl.setPosition(lx, cy);
         this.capLbl.setColor(new cc.Color(200, 220, 200));
         this.addChild(this.capLbl, 5);
 
         var passBtn = new ccui.Button('res/btn_register_normal.png', '', '');
         passBtn.setScale9Enabled(true);
         passBtn.setCapInsets(cc.rect(4.2, 4.2, 2.1, 2.1));
-        passBtn.setContentSize(cc.size(160, 58));
-        passBtn.setTitleText('Bỏ lượt');
-        passBtn.setTitleFontSize(26);
+        passBtn.setContentSize(cc.size(200, 68));
+        passBtn.setTitleText(L('go_pass'));
+        passBtn.setTitleFontSize(30);
         passBtn.setTitleColor(new cc.Color(255, 255, 255));
         passBtn.setColor(new cc.Color(70, 70, 110));
         passBtn.setZoomScale(-0.05);
-        passBtn.setPosition(cx, this.by - 118);
+        passBtn.setPosition(lx, cy - 80);
         this.addChild(passBtn, 6);
         passBtn.addClickEventListener(function() {
             if (thiz.gameOver || thiz.turn !== 1) return;
@@ -112,9 +114,8 @@ var GoLayer = cc.Layer.extend({
         var span = C * (N - 1);
 
         var g = new cc.DrawNode();
-        var pad = Math.round(C * 0.65);
+        var pad = 20;
         var lc  = new cc.Color(80, 55, 20, 255);
-        // Nền gỗ (dùng drawRect với fill giống carogame)
         g.drawRect(
             cc.p(bx - pad, by - pad),
             cc.p(bx + span + pad, by + span + pad),
@@ -128,7 +129,6 @@ var GoLayer = cc.Layer.extend({
         g.drawRect(cc.p(bx, by), cc.p(bx + span, by + span), null, 3, lc);
         this.addChild(g, 2);
 
-        // Hoshi points cho 9x9: 4 góc (2,2) + trung tâm (4,4)
         var stars = [[2,2],[2,6],[4,4],[6,2],[6,6]];
         var sg = new cc.DrawNode();
         for (var s = 0; s < stars.length; s++) {
@@ -152,7 +152,6 @@ var GoLayer = cc.Layer.extend({
         this._tryPlace(row, col, 1);
     },
 
-    // ===== Đặt quân (trả về true nếu hợp lệ) =====
     _tryPlace: function(row, col, player) {
         var N = this.N;
         var idx = row * N + col;
@@ -164,7 +163,6 @@ var GoLayer = cc.Layer.extend({
         var dirs = [[-1,0],[1,0],[0,-1],[0,1]];
         var captured = [];
 
-        // Bắt quân đối phương
         for (var d = 0; d < 4; d++) {
             var nr = row + dirs[d][0], nc = col + dirs[d][1];
             if (nr < 0 || nr >= N || nc < 0 || nc >= N) continue;
@@ -180,15 +178,12 @@ var GoLayer = cc.Layer.extend({
             }
         }
 
-        // Kiểm tra tự sát
         var myGrp = this._getGroup(test, row, col);
         if (this._liberties(test, myGrp) === 0) return false;
 
-        // Ko
         var bStr = test.join(',');
         if (this.prevBoard && this.prevBoard === bStr) return false;
 
-        // Áp dụng
         this.prevBoard = this.board.join(',');
         this.board = test;
 
@@ -203,10 +198,9 @@ var GoLayer = cc.Layer.extend({
         this.passes = 0;
         this._updateCapLbl();
 
-        // Lượt tiếp
         if (player === 1) {
             this.turn = 2;
-            this.statusLbl.setString('Máy đang suy nghĩ...');
+            this.statusLbl.setString(L('ai_thinking'));
             var thiz = this;
             this.runAction(cc.sequence(
                 cc.delayTime(0.45),
@@ -214,7 +208,7 @@ var GoLayer = cc.Layer.extend({
             ));
         } else {
             this.turn = 1;
-            this.statusLbl.setString('Lượt của bạn (Đen)');
+            this.statusLbl.setString(L('go_your_turn'));
         }
         return true;
     },
@@ -224,7 +218,7 @@ var GoLayer = cc.Layer.extend({
         if (this.passes >= 2) { this._endGame(); return; }
         if (player === 1) {
             this.turn = 2;
-            this.statusLbl.setString('Máy đang suy nghĩ...');
+            this.statusLbl.setString(L('ai_thinking'));
             var thiz = this;
             this.runAction(cc.sequence(
                 cc.delayTime(0.4),
@@ -232,7 +226,7 @@ var GoLayer = cc.Layer.extend({
             ));
         } else {
             this.turn = 1;
-            this.statusLbl.setString('Máy bỏ lượt. Lượt của bạn (Đen)');
+            this.statusLbl.setString(L('go_mach_pass'));
         }
     },
 
@@ -242,7 +236,6 @@ var GoLayer = cc.Layer.extend({
         var N = this.N;
         var dirs = [[-1,0],[1,0],[0,-1],[0,1]];
 
-        // 1. Bắt quân đối thủ trong nguy hiểm (1 khí)
         for (var r = 0; r < N; r++) {
             for (var c = 0; c < N; c++) {
                 if (this.board[r*N+c] !== 1) continue;
@@ -254,7 +247,6 @@ var GoLayer = cc.Layer.extend({
             }
         }
 
-        // 2. Cứu quân mình bị 1 khí
         for (var r = 0; r < N; r++) {
             for (var c = 0; c < N; c++) {
                 if (this.board[r*N+c] !== 2) continue;
@@ -266,7 +258,6 @@ var GoLayer = cc.Layer.extend({
             }
         }
 
-        // 3. Đánh ngẫu nhiên vào ô trống (có ưu tiên trung tâm)
         var moves = [];
         for (var r = 0; r < N; r++)
             for (var c = 0; c < N; c++)
@@ -282,10 +273,9 @@ var GoLayer = cc.Layer.extend({
             if (this._tryPlace(moves[m][0], moves[m][1], 2)) return;
         }
 
-        // Bỏ lượt
         this._doPass(2);
         this.turn = 1;
-        this.statusLbl.setString('Lượt của bạn (Đen)');
+        this.statusLbl.setString(L('go_your_turn'));
     },
 
     _findLiberty: function(group) {
@@ -302,7 +292,6 @@ var GoLayer = cc.Layer.extend({
         return null;
     },
 
-    // ===== BFS lấy nhóm =====
     _getGroup: function(board, row, col) {
         var N = this.N, color = board[row*N+col];
         var visited = {}, queue = [row*N+col], group = [];
@@ -334,7 +323,6 @@ var GoLayer = cc.Layer.extend({
         return Object.keys(lib).length;
     },
 
-    // ===== Vẽ quân =====
     _drawStone: function(row, col, player) {
         var C = this.CELL;
         var px = this.bx + col*C, py = this.by + row*C;
@@ -356,12 +344,10 @@ var GoLayer = cc.Layer.extend({
     },
 
     _updateCapLbl: function() {
-        this.capLbl.setString(
-            'Đen bắt: ' + this.captures[1] + '   Trắng bắt: ' + this.captures[2]
-        );
+        var s = L('go_cap').replace('{b}', this.captures[1]).replace('{w}', this.captures[2]);
+        this.capLbl.setString(s);
     },
 
-    // ===== Tính điểm cuối ván =====
     _countTerritory: function() {
         var N = this.N, dirs = [[-1,0],[1,0],[0,-1],[0,1]];
         var visited = [];
@@ -395,8 +381,10 @@ var GoLayer = cc.Layer.extend({
         this.gameOver = true;
         var t = this._countTerritory();
         var bScore = t.black + this.captures[1];
-        var wScore = t.white + this.captures[2] + 6.5; // komi
+        var wScore = t.white + this.captures[2] + 6.5;
         var result = bScore > wScore ? 1 : -1;
+        if (result === 1) playSound(res.SFX_Win);
+        else              playSound(res.SFX_Lose);
         var thiz = this;
         this.runAction(cc.sequence(
             cc.delayTime(0.3),
@@ -404,7 +392,6 @@ var GoLayer = cc.Layer.extend({
         ));
     },
 
-    // ===== Popup =====
     _showPopup: function(result, bScore, wScore) {
         var thiz = this;
         var size = cc.winSize;
@@ -422,21 +409,22 @@ var GoLayer = cc.Layer.extend({
         border.drawRect(cc.p(0,0), cc.p(pW,pH), null, 3, bCol);
         panel.addChild(border);
 
-        var winLbl = new cc.LabelTTF(result===1 ? 'Bạn (Đen) thắng!' : 'Máy (Trắng) thắng!', 'Arial', 44);
+        var winTxt = result===1 ? L('go_black_wins') : L('go_white_wins');
+        var winLbl = new cc.LabelTTF(winTxt, 'Arial', 44);
         winLbl.setPosition(pW/2, pH-72);
         winLbl.setColor(bCol);
         panel.addChild(winLbl);
 
-        var scoreLbl = new cc.LabelTTF(
-            'Đen: ' + bScore.toFixed(1) + '   Trắng: ' + wScore.toFixed(1) + ' (komi 6.5)',
-            'Arial', 28
-        );
+        var scoreTxt = L('go_score')
+            .replace('{b}', bScore.toFixed(1))
+            .replace('{w}', wScore.toFixed(1));
+        var scoreLbl = new cc.LabelTTF(scoreTxt, 'Arial', 28);
         scoreLbl.setPosition(pW/2, pH-130);
         scoreLbl.setColor(new cc.Color(220,220,180));
         panel.addChild(scoreLbl);
 
-        var btnPlay = this._makeBtn('Chơi lại', new cc.Color(30,120,50));
-        var btnExit = this._makeBtn('Thoát',    new cc.Color(150,40,40));
+        var btnPlay = this._makeBtn(L('play_again'), new cc.Color(30,120,50));
+        var btnExit = this._makeBtn(L('exit'),       new cc.Color(150,40,40));
         btnPlay.x = pW/2-120; btnPlay.y = 58;
         btnExit.x = pW/2+120; btnExit.y = 58;
         panel.addChild(btnPlay);
@@ -461,7 +449,6 @@ var GoLayer = cc.Layer.extend({
         panel.runAction(cc.sequence(cc.scaleTo(0.14,1.08), cc.scaleTo(0.06,1.0)));
     },
 
-    // ===== Reset =====
     _reset: function() {
         var keys = Object.keys(this.stoneNodes);
         for (var k = 0; k < keys.length; k++) this.stoneNodes[keys[k]].removeFromParent();
@@ -473,7 +460,7 @@ var GoLayer = cc.Layer.extend({
         this.gameOver  = false;
         this.passes    = 0;
         this.turn      = 1;
-        this.statusLbl.setString('Bạn đi Đen  —  Máy đi Trắng');
+        this.statusLbl.setString(L('go_status'));
         this._updateCapLbl();
     },
 

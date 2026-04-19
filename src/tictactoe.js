@@ -34,12 +34,12 @@ var TicTacToeLayer = cc.Layer.extend({
         this._drawGrid();
 
         // State
-        this.board    = [0,0,0, 0,0,0, 0,0,0]; // 0=trống 1=X 2=O
+        this.board    = [0,0,0, 0,0,0, 0,0,0];
         this.marks    = [];
         this.winLine  = null;
         this.gameOver = false;
 
-        this.statusLbl = new cc.LabelTTF('Bạn đi X  —  Máy đi O', 'Arial', 34);
+        this.statusLbl = new cc.LabelTTF(L('ttt_status'), 'Arial', 34);
         this.statusLbl.setPosition(cx, this.by - 52);
         this.statusLbl.setColor(new cc.Color(255, 240, 120));
         this.addChild(this.statusLbl, 5);
@@ -83,12 +83,9 @@ var TicTacToeLayer = cc.Layer.extend({
         var C = this.CELL, bx = this.bx, by = this.by;
         var lc = new cc.Color(220, 220, 220, 255);
         var g = new cc.DrawNode();
-        // viền ngoài
         g.drawRect(cc.p(bx, by), cc.p(bx + C*3, by + C*3), null, 4, lc);
-        // đường dọc trong
         g.drawSegment(cc.p(bx+C,   by), cc.p(bx+C,   by+C*3), 4, lc);
         g.drawSegment(cc.p(bx+C*2, by), cc.p(bx+C*2, by+C*3), 4, lc);
-        // đường ngang trong
         g.drawSegment(cc.p(bx, by+C),   cc.p(bx+C*3, by+C),   4, lc);
         g.drawSegment(cc.p(bx, by+C*2), cc.p(bx+C*3, by+C*2), 4, lc);
         this.addChild(g, 2);
@@ -109,7 +106,7 @@ var TicTacToeLayer = cc.Layer.extend({
         this._place(idx, 1);
         if (this._checkEnd()) return;
 
-        this.statusLbl.setString('Máy đang suy nghĩ...');
+        this.statusLbl.setString(L('ai_thinking'));
         var thiz = this;
         this.runAction(cc.sequence(
             cc.delayTime(0.42),
@@ -167,7 +164,6 @@ var TicTacToeLayer = cc.Layer.extend({
         }
     },
 
-    // ===== Đặt X hoặc O =====
     _place: function(idx, player) {
         this.board[idx] = player;
         var C = this.CELL;
@@ -200,13 +196,12 @@ var TicTacToeLayer = cc.Layer.extend({
         mark.runAction(cc.sequence(cc.scaleTo(0.10, 1.2), cc.scaleTo(0.06, 1.0)));
     },
 
-    // ===== Kiểm tra kết thúc =====
     _checkEnd: function() {
         var w = this._winner();
         if (w) {
             this.gameOver = true;
             this._drawWinLine(w);
-            var msg = w === 1 ? 'Bạn thắng!' : 'Máy thắng!';
+            var msg = w === 1 ? L('you_win') : L('machine_wins');
             var thiz = this;
             this.runAction(cc.sequence(
                 cc.delayTime(0.55),
@@ -221,11 +216,11 @@ var TicTacToeLayer = cc.Layer.extend({
             var thiz = this;
             this.runAction(cc.sequence(
                 cc.delayTime(0.3),
-                cc.callFunc(function() { thiz._showPopup('Hoà rồi!', 0); })
+                cc.callFunc(function() { thiz._showPopup(L('draw'), 0); })
             ));
             return true;
         }
-        this.statusLbl.setString('Lượt của bạn (X)');
+        this.statusLbl.setString(L('ttt_your_turn'));
         return false;
     },
 
@@ -257,8 +252,9 @@ var TicTacToeLayer = cc.Layer.extend({
         }
     },
 
-    // ===== Popup kết quả =====
     _showPopup: function(msg, result) {
+        if (result === 1)       playSound(res.SFX_Win);
+        else if (result === -1) playSound(res.SFX_Lose);
         var thiz = this;
         var size = cc.winSize;
 
@@ -286,8 +282,8 @@ var TicTacToeLayer = cc.Layer.extend({
         msgLbl.setColor(bCol);
         panel.addChild(msgLbl);
 
-        var btnPlay = this._makeBtn('Chơi lại', new cc.Color(30, 120, 50));
-        var btnExit = this._makeBtn('Thoát',    new cc.Color(150, 40, 40));
+        var btnPlay = this._makeBtn(L('play_again'), new cc.Color(30, 120, 50));
+        var btnExit = this._makeBtn(L('exit'),       new cc.Color(150, 40, 40));
         btnPlay.x = pW/2 - 110; btnPlay.y = 54;
         btnExit.x = pW/2 + 110; btnExit.y = 54;
         panel.addChild(btnPlay);
@@ -303,7 +299,6 @@ var TicTacToeLayer = cc.Layer.extend({
             cc.director.runScene(new MiniGamesScene());
         });
 
-        // Chặn tap xuyên overlay
         var blocker = cc.EventListener.create({
             event: cc.EventListener.TOUCH_ONE_BY_ONE,
             swallowTouches: true,
@@ -318,14 +313,13 @@ var TicTacToeLayer = cc.Layer.extend({
         panel.runAction(cc.sequence(cc.scaleTo(0.14, 1.08), cc.scaleTo(0.06, 1.0)));
     },
 
-    // ===== Reset ván mới =====
     _reset: function() {
         for (var i = 0; i < this.marks.length; i++) this.marks[i].removeFromParent();
         this.marks = [];
         if (this.winLine) { this.winLine.removeFromParent(); this.winLine = null; }
         this.board    = [0,0,0, 0,0,0, 0,0,0];
         this.gameOver = false;
-        this.statusLbl.setString('Bạn đi X  —  Máy đi O');
+        this.statusLbl.setString(L('ttt_status'));
     },
 
     _makeBtn: function(text, color) {

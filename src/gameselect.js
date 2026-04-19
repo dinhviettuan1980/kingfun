@@ -1,6 +1,7 @@
 var GameSelectLayer = cc.Layer.extend({
     ctor: function() {
         cc.Layer.prototype.ctor.call(this);
+        var thiz = this;
 
         var size = cc.winSize;
         var cx = size.width / 2, cy = size.height / 2;
@@ -9,13 +10,13 @@ var GameSelectLayer = cc.Layer.extend({
         bg.scale = 1.1; bg.x = cx; bg.y = cy;
         this.addChild(bg);
 
-        var title = new cc.LabelTTF("Chọn trò chơi", "Arial", 52);
-        title.x = cx; title.y = cy + 200;
-        title.setColor(new cc.Color(255, 225, 50));
-        this.addChild(title, 5);
+        this.titleLbl = new cc.LabelTTF(L('select_game'), "Arial", 52);
+        this.titleLbl.x = cx; this.titleLbl.y = cy + 200;
+        this.titleLbl.setColor(new cc.Color(255, 225, 50));
+        this.addChild(this.titleLbl, 5);
 
         // Ba Cây
-        var bacayBtn = this._makeBtn("Ba Cây", new cc.Color(30, 100, 180));
+        var bacayBtn = this._makeBtn("Ba Cay", new cc.Color(30, 100, 180));
         bacayBtn.setPosition(cx - 230, cy);
         this.addChild(bacayBtn, 6);
         bacayBtn.addClickEventListener(function() {
@@ -23,7 +24,7 @@ var GameSelectLayer = cc.Layer.extend({
         });
 
         // Tá Lả
-        var talaBtn = this._makeBtn("Tá Lả", new cc.Color(160, 50, 30));
+        var talaBtn = this._makeBtn("Ta La", new cc.Color(160, 50, 30));
         talaBtn.setPosition(cx + 230, cy);
         this.addChild(talaBtn, 6);
         talaBtn.addClickEventListener(function() {
@@ -38,7 +39,7 @@ var GameSelectLayer = cc.Layer.extend({
             cc.director.runScene(new MiniGamesScene());
         });
 
-        // Back về login
+        // Back
         var backBtn = new ccui.Button(res.Back_png, "", "");
         backBtn.x = size.width - 80; backBtn.y = size.height - 60;
         backBtn.scale = 1; backBtn.setZoomScale(-0.05);
@@ -46,6 +47,19 @@ var GameSelectLayer = cc.Layer.extend({
         backBtn.addClickEventListener(function() {
             cc.director.runScene(new LoginScene());
         });
+
+        // Hamburger button (top-left)
+        var hambBtn = makeHamburgerBtn(52, size.height - 55);
+        this.addChild(hambBtn, 6);
+        hambBtn.addClickEventListener(function() {
+            showSettingsPanel(function() {
+                // Update visible labels in-place — no scene reload needed
+                thiz.titleLbl.setString(L('select_game'));
+            });
+        });
+
+        // Start background music
+        Settings.startMusic();
     },
 
     _makeBtn: function(title, color) {
@@ -60,8 +74,10 @@ var GameSelectLayer = cc.Layer.extend({
         btn.setZoomScale(-0.05);
         btn.scale = 1.3;
         return btn;
-    }
+    },
+
 });
+
 
 var GameSelectScene = cc.Scene.extend({
     onEnter: function() {
@@ -71,7 +87,7 @@ var GameSelectScene = cc.Scene.extend({
 });
 
 // =====================================================
-// MiniGames — trang chứa các game giải trí
+// MiniGames
 // =====================================================
 var MiniGamesLayer = cc.Layer.extend({
     ctor: function() {
@@ -89,12 +105,11 @@ var MiniGamesLayer = cc.Layer.extend({
         title.setColor(new cc.Color(255, 225, 50));
         this.addChild(title, 5);
 
-        var sub = new cc.LabelTTF("Chơi cho vui — không mất tiền", "Arial", 30);
+        var sub = new cc.LabelTTF(L('mini_games_sub'), "Arial", 30);
         sub.x = cx; sub.y = cy + 160;
         sub.setColor(new cc.Color(180, 220, 180));
         this.addChild(sub, 5);
 
-        // Tic-Tac-Toe
         var tttBtn = this._makeBtn("Tic-Tac-Toe", new cc.Color(30, 130, 100));
         tttBtn.setPosition(cx, cy + 60);
         this.addChild(tttBtn, 6);
@@ -102,23 +117,20 @@ var MiniGamesLayer = cc.Layer.extend({
             cc.director.runScene(new TicTacToeScene());
         });
 
-        // Cờ Caro
-        var caroBtn = this._makeBtn("Cờ Caro", new cc.Color(120, 60, 160));
+        var caroBtn = this._makeBtn("Co Caro", new cc.Color(120, 60, 160));
         caroBtn.setPosition(cx, cy - 60);
         this.addChild(caroBtn, 6);
         caroBtn.addClickEventListener(function() {
             cc.director.runScene(new CaroScene());
         });
 
-        // Cờ Vây
-        var goBtn = this._makeBtn("Cờ Vây", new cc.Color(160, 100, 20));
+        var goBtn = this._makeBtn("Co Vay", new cc.Color(160, 100, 20));
         goBtn.setPosition(cx, cy - 185);
         this.addChild(goBtn, 6);
         goBtn.addClickEventListener(function() {
             cc.director.runScene(new GoScene());
         });
 
-        // Back về GameSelect
         var backBtn = new ccui.Button(res.Back_png, "", "");
         backBtn.x = size.width - 80; backBtn.y = size.height - 60;
         backBtn.scale = 1; backBtn.setZoomScale(-0.05);

@@ -143,6 +143,99 @@ var LoginLayer = cc.Layer.extend({
         forgotBtn.setVisible(false);
         this.addChild(forgotBtn, 7);
 
+        // Nút đăng nhập Facebook
+        var fbBtn = new ccui.Button('res/btn_register_normal.png', '', '');
+        fbBtn.setScale9Enabled(true);
+        fbBtn.setCapInsets(cc.rect(4.2, 4.2, 2.1, 2.1));
+        fbBtn.setContentSize(cc.size(300, 80));
+        fbBtn.setTitleText('  Đăng nhập Facebook');
+        fbBtn.setTitleFontSize(30);
+        fbBtn.setTitleColor(new cc.Color(255, 255, 255));
+        fbBtn.setColor(new cc.Color(24, 119, 242));
+        fbBtn.setZoomScale(-0.05);
+        fbBtn.x = size.width / 2 - 80;
+        fbBtn.y = size.height / 2 - 100;
+        this.addChild(fbBtn, 7);
+
+        // Nếu đã login FB trước đó thì tự điền tên
+        var fbProfile = FB.getProfile();
+        if (fbProfile && fbProfile.name) {
+            inputUsername.setString(fbProfile.name.substring(0, 10));
+            fbBtn.setTitleText('✓ ' + fbProfile.name.substring(0, 12));
+            fbBtn.setColor(new cc.Color(40, 160, 60));
+        }
+
+        fbBtn.addClickEventListener(function() {
+            var existing = FB.getProfile();
+            if (existing && existing.name) {
+                FB.logout();
+                inputUsername.setString('');
+                fbBtn.setTitleText('  Dang nhap Facebook');
+                fbBtn.setColor(new cc.Color(24, 119, 242));
+                return;
+            }
+            fbBtn.setTitleText('Dang dang nhap...');
+            fbBtn.setEnabled(false);
+            FB.login(
+                function(name) {
+                    inputUsername.setString(name.substring(0, 10));
+                    fbBtn.setTitleText('OK ' + name.substring(0, 12));
+                    fbBtn.setColor(new cc.Color(40, 160, 60));
+                    fbBtn.setEnabled(true);
+                },
+                function() {
+                    fbBtn.setTitleText('  Dang nhap Facebook');
+                    fbBtn.setColor(new cc.Color(24, 119, 242));
+                    fbBtn.setEnabled(true);
+                }
+            );
+        });
+
+        // Google login button
+        var ggBtn = new ccui.Button('res/btn_register_normal.png', '', '');
+        ggBtn.setScale9Enabled(true);
+        ggBtn.setCapInsets(cc.rect(4.2, 4.2, 2.1, 2.1));
+        ggBtn.setContentSize(cc.size(300, 80));
+        ggBtn.setTitleText('  Dang nhap Google');
+        ggBtn.setTitleFontSize(30);
+        ggBtn.setTitleColor(new cc.Color(255, 255, 255));
+        ggBtn.setColor(new cc.Color(219, 68, 55));
+        ggBtn.setZoomScale(-0.05);
+        ggBtn.x = size.width / 2 - 80;
+        ggBtn.y = size.height / 2 - 200;
+        this.addChild(ggBtn, 7);
+
+        var ggProfile = GG.getProfile();
+        if (ggProfile && ggProfile.name) {
+            inputUsername.setString(ggProfile.name.substring(0, 10));
+            ggBtn.setTitleText('OK ' + ggProfile.name.substring(0, 12));
+            ggBtn.setColor(new cc.Color(40, 160, 60));
+        }
+
+        ggBtn.addClickEventListener(function() {
+            var existing = GG.getProfile();
+            if (existing && existing.name) {
+                GG.logout();
+                inputUsername.setString('');
+                ggBtn.setTitleText('  Dang nhap Google');
+                ggBtn.setColor(new cc.Color(219, 68, 55));
+                return;
+            }
+            ggBtn.setTitleText('Dang dang nhap...');
+            ggBtn.setEnabled(false);
+            GG.login(
+                function(name) {
+                    cc.sys.localStorage.setItem("inputUsername", name.substring(0, 10));
+                    cc.director.runScene(new GameSelectScene());
+                },
+                function() {
+                    ggBtn.setTitleText('  Dang nhap Google');
+                    ggBtn.setColor(new cc.Color(219, 68, 55));
+                    ggBtn.setEnabled(true);
+                }
+            );
+        });
+
         startBtn.addClickEventListener( function() {
 
             if (inputUsername.getString().trim() == '') {
@@ -205,7 +298,14 @@ var LoginLayer = cc.Layer.extend({
 
         forgotBtn.addClickEventListener( function() {
             cc.director.runScene(new ForgotScene());
-        })
+        });
+
+        // Hamburger settings button (top-right)
+        var hambBtn = makeHamburgerBtn(size.width - 52, size.height - 55);
+        this.addChild(hambBtn, 8);
+        hambBtn.addClickEventListener(function() {
+            showSettingsPanel(null);
+        });
     }
 })
 

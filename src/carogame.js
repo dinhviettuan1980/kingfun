@@ -1,8 +1,3 @@
-// =====================================================
-// Cờ Caro  15×15 — người chơi ● Đen, máy ○ Trắng
-// Thắng khi có 5 quân liên tiếp
-// =====================================================
-
 var CaroLayer = cc.Layer.extend({
     ctor: function() {
         cc.Layer.prototype.ctor.call(this);
@@ -14,13 +9,16 @@ var CaroLayer = cc.Layer.extend({
         bg.scale = 1.1; bg.x = cx; bg.y = cy;
         this.addChild(bg);
 
-        var title = new cc.LabelTTF('Cờ Caro', 'Arial', 50);
-        title.setPosition(cx, cy + 285);
-        title.setColor(new cc.Color(255, 225, 50));
-        this.addChild(title, 5);
+        // Board params
+        this.N    = 15;
+        this.CELL = 41;
+        this.bx   = size.width - (this.N - 1) * this.CELL - 29;
+        this.by   = Math.round((size.height - (this.N - 1) * this.CELL) / 2);
+        this.lx   = Math.round(this.bx / 2);
+        var lx    = this.lx;
 
         var backBtn = new ccui.Button(res.Back_png, '', '');
-        backBtn.x = size.width - 80; backBtn.y = size.height - 60;
+        backBtn.x = 80; backBtn.y = size.height - 50;
         backBtn.scale = 1; backBtn.setZoomScale(-0.05);
         this.addChild(backBtn, 6);
         backBtn.addClickEventListener(function() {
@@ -28,28 +26,58 @@ var CaroLayer = cc.Layer.extend({
             cc.director.runScene(new MiniGamesScene());
         });
 
-        // Board params
-        this.N    = 15;   // 15×15 giao điểm
-        this.CELL = 32;   // px giữa các giao điểm
-        this.bx   = cx - (this.N - 1) * this.CELL / 2;
-        this.by   = cy - (this.N - 1) * this.CELL / 2 - 15;
+        var title = new cc.LabelTTF(L('caro_title'), 'Arial', 44);
+        title.setPosition(lx, size.height - 50);
+        title.setColor(new cc.Color(255, 225, 50));
+        this.addChild(title, 5);
 
         this._drawBoard();
 
-        // Trạng thái
-        this.board    = [];
+        // Game state
+        this.board       = [];
         for (var r = 0; r < this.N; r++) {
             this.board.push([]);
             for (var c = 0; c < this.N; c++) this.board[r].push(0);
         }
-        this.stoneNodes = [];
-        this.lastMark   = null;
-        this.gameOver   = false;
+        this.stoneNodes  = [];
+        this.lastMark    = null;
+        this.gameOver    = false;
+        this.waitingForAI = false;
 
-        this.statusLbl = new cc.LabelTTF('Bạn đánh ● Đen  —  Máy đánh ○ Trắng', 'Arial', 28);
-        this.statusLbl.setPosition(cx, this.by - 44);
+        // Score & turn state (persist across resets)
+        this.scorePlayer  = 0;
+        this.scoreMachine = 0;
+        this.firstPlayer  = 1;
+        this.nextFirst    = 1;
+
+        // Countdown
+        this._timerHandle = null;
+        this._timerId     = 0;
+        this._timerRunning = false;
+        this._timeAccum   = 0;
+        this.countdown    = 30;
+        this.scheduleUpdate();
+
+        // --- Labels ---
+        this.scoreLbl = new cc.LabelTTF(L('caro_score').replace('{p}','0').replace('{m}','0'), 'Arial', 30);
+        this.scoreLbl.setPosition(lx, cy + 160);
+        this.scoreLbl.setColor(new cc.Color(100, 220, 255));
+        this.addChild(this.scoreLbl, 5);
+
+        this.statusLbl = new cc.LabelTTF(L('caro_your_turn'), 'Arial', 26);
+        this.statusLbl.setPosition(lx, cy + 90);
         this.statusLbl.setColor(new cc.Color(255, 240, 120));
         this.addChild(this.statusLbl, 5);
+
+        this.timerLbl = new cc.LabelTTF('30', 'Arial', 72);
+        this.timerLbl.setPosition(lx, cy - 20);
+        this.timerLbl.setColor(new cc.Color(255, 240, 120));
+        this.addChild(this.timerLbl, 5);
+
+        var timerCap = new cc.LabelTTF(L('caro_timer_cap'), 'Arial', 22);
+        timerCap.setPosition(lx, cy - 90);
+        timerCap.setColor(new cc.Color(160, 160, 160));
+        this.addChild(timerCap, 5);
 
         // Touch / click
         if (cc.sys.isNative) {
@@ -72,9 +100,13 @@ var CaroLayer = cc.Layer.extend({
             };
             cc.game.canvas.addEventListener('mousedown', this._mouseHandler);
         }
+
+        this._startTimer();
     },
 
     _cleanup: function() {
+        this._stopTimer();
+        this.unscheduleUpdate();
         if (this._mouseHandler) {
             cc.game.canvas.removeEventListener('mousedown', this._mouseHandler);
             this._mouseHandler = null;
@@ -86,44 +118,71 @@ var CaroLayer = cc.Layer.extend({
         this._cleanup();
     },
 
-    // ===== Vẽ bàn cờ =====
+    // ===== Timer =====
+    update: function(dt) {
+        if (!this._timerRunning) return;
+        this._timeAccum += dt;
+        if (this._timeAccum >= 1.0) {
+            this._timeAccum -= 1.0;
+            this.countdown--;
+            this.timerLbl.setString(String(this.countdown));
+            if (this.countdown === 10) {
+                this.timerLbl.setColor(new cc.Color(255, 60, 60));
+                if (cc.sys.isNative) {
+                    jsb.reflection.callStaticMethod("GoogleBridge", "speak:", L('tts_warning'));
+                }
+            }
+            if (this.countdown <= 0) {
+                this._timerRunning = false;
+                this._endGame(L('caro_timeout'), -1);
+            }
+        }
+    },
+
+    _startTimer: function() {
+        this.countdown     = 30;
+        this._timeAccum    = 0;
+        this._timerRunning = true;
+        this.timerLbl.setString('30');
+        this.timerLbl.setColor(new cc.Color(255, 240, 120));
+    },
+
+    _stopTimer: function() {
+        this._timerRunning = false;
+        this._timeAccum    = 0;
+        if (this.timerLbl) {
+            this.timerLbl.setString('30');
+            this.timerLbl.setColor(new cc.Color(255, 240, 120));
+        }
+    },
+
+    // ===== Ve ban co =====
     _drawBoard: function() {
         var N = this.N, C = this.CELL, bx = this.bx, by = this.by;
         var pad = 14;
         var g = new cc.DrawNode();
-
-        // Nền gỗ
         g.drawRect(
             cc.p(bx - pad, by - pad),
             cc.p(bx + (N-1)*C + pad, by + (N-1)*C + pad),
             new cc.Color(195, 155, 85, 255),
             2, new cc.Color(130, 95, 38, 255)
         );
-
-        // Đường kẻ
         var lc = new cc.Color(110, 75, 28, 220);
         for (var i = 0; i < N; i++) {
             g.drawSegment(cc.p(bx + i*C, by),         cc.p(bx + i*C, by + (N-1)*C), 1, lc);
             g.drawSegment(cc.p(bx,       by + i*C),   cc.p(bx + (N-1)*C, by + i*C), 1, lc);
         }
-
-        // Điểm hoa thị (star points)
         var stars = [[3,3],[3,7],[3,11],[7,3],[7,7],[7,11],[11,3],[11,7],[11,11]];
         for (var i = 0; i < stars.length; i++) {
-            g.drawDot(
-                cc.p(bx + stars[i][1]*C, by + stars[i][0]*C),
-                3.5, new cc.Color(110, 75, 28, 255)
-            );
+            g.drawDot(cc.p(bx + stars[i][1]*C, by + stars[i][0]*C), 3.5, new cc.Color(110, 75, 28, 255));
         }
-
         this.addChild(g, 2);
     },
 
-    // ===== Xử lý click =====
+    // ===== Xu ly click =====
     _handleTap: function(x, y) {
-        if (this.gameOver) return;
+        if (this.gameOver || this.waitingForAI) return;
         var C = this.CELL, bx = this.bx, by = this.by, N = this.N;
-
         var col = Math.round((x - bx) / C);
         var row = Math.round((y - by) / C);
         if (col < 0 || col >= N || row < 0 || row >= N) return;
@@ -131,11 +190,13 @@ var CaroLayer = cc.Layer.extend({
         if (Math.abs(y - (by + row*C)) > C*0.65) return;
         if (this.board[row][col] !== 0) return;
 
+        this._stopTimer();
         this._place(row, col, 1);
-        if (this._checkWin(row, col, 1)) { this._endGame('Bạn thắng!', 1);  return; }
-        if (this._full())                 { this._endGame('Hoà rồi!', 0);   return; }
+        if (this._checkWin(row, col, 1)) { this._endGame(L('you_win'), 1); return; }
+        if (this._full())                 { this._endGame(L('draw'),   0); return; }
 
-        this.statusLbl.setString('Máy đang suy nghĩ...');
+        this.waitingForAI = true;
+        this.statusLbl.setString(L('ai_thinking'));
         var thiz = this;
         this.runAction(cc.sequence(
             cc.delayTime(0.3),
@@ -148,21 +209,20 @@ var CaroLayer = cc.Layer.extend({
         if (this.gameOver) return;
         var m = this._bestMove();
         this._place(m.row, m.col, 2);
-        if (this._checkWin(m.row, m.col, 2)) { this._endGame('Máy thắng!', -1); return; }
-        if (this._full())                      { this._endGame('Hoà rồi!', 0);   return; }
-        this.statusLbl.setString('Lượt của bạn (●)');
+        this.waitingForAI = false;
+        if (this._checkWin(m.row, m.col, 2)) { this._endGame(L('machine_wins'), -1); return; }
+        if (this._full())                      { this._endGame(L('draw'),        0); return; }
+        this.statusLbl.setString(L('caro_your_turn'));
+        this._startTimer();
     },
 
     _bestMove: function() {
         var N = this.N, best = -1, br = 7, bc = 7;
-
-        // Bàn trống → đánh giữa
         var empty = true;
         outer: for (var r = 0; r < N; r++)
             for (var c = 0; c < N; c++)
                 if (this.board[r][c]) { empty = false; break outer; }
         if (empty) return { row: 7, col: 7 };
-
         for (var r = 0; r < N; r++) {
             for (var c = 0; c < N; c++) {
                 if (this.board[r][c] || !this._near(r, c, 2)) continue;
@@ -187,17 +247,12 @@ var CaroLayer = cc.Layer.extend({
     _evalCell: function(row, col) {
         var dirs = [[0,1],[1,0],[1,1],[1,-1]];
         var atk = 0, def = 0;
-
         this.board[row][col] = 2;
-        for (var d = 0; d < dirs.length; d++)
-            atk += this._score(this._count(row, col, dirs[d][0], dirs[d][1], 2));
+        for (var d = 0; d < dirs.length; d++) atk += this._score(this._count(row, col, dirs[d][0], dirs[d][1], 2));
         this.board[row][col] = 0;
-
         this.board[row][col] = 1;
-        for (var d = 0; d < dirs.length; d++)
-            def += this._score(this._count(row, col, dirs[d][0], dirs[d][1], 1));
+        for (var d = 0; d < dirs.length; d++) def += this._score(this._count(row, col, dirs[d][0], dirs[d][1], 1));
         this.board[row][col] = 0;
-
         return atk + def * 1.15;
     },
 
@@ -221,43 +276,34 @@ var CaroLayer = cc.Layer.extend({
         return o ? 8 : 0;
     },
 
-    // ===== Đặt quân =====
+    // ===== Dat quan =====
     _place: function(row, col, player) {
         this.board[row][col] = player;
         var C = this.CELL;
-        var px = this.bx + col * C;
-        var py = this.by + row * C;
+        var px = this.bx + col * C, py = this.by + row * C;
         var r  = C * 0.43;
-
         var node = new cc.DrawNode();
         if (player === 1) {
-            // Đen: nền tối + highlight nhỏ
             node.drawDot(cc.p(0, 0), r, new cc.Color(28, 28, 28, 255));
             node.drawDot(cc.p(-r*0.25, r*0.25), r*0.3, new cc.Color(80, 80, 80, 180));
         } else {
-            // Trắng: viền tối + nền sáng + highlight
             node.drawDot(cc.p(0, 0), r, new cc.Color(55, 55, 55, 255));
             node.drawDot(cc.p(0, 0), r - 2, new cc.Color(235, 235, 235, 255));
             node.drawDot(cc.p(-r*0.25, r*0.25), r*0.28, new cc.Color(255, 255, 255, 200));
         }
-
         node.setPosition(px, py);
         this.addChild(node, 3);
         this.stoneNodes.push(node);
-
-        // Đánh dấu nước đi cuối
         if (this.lastMark) this.lastMark.removeFromParent();
         var mark = new cc.DrawNode();
-        var mc = player === 1 ? new cc.Color(255,80,80,220) : new cc.Color(80,80,255,220);
-        mark.drawDot(cc.p(px, py), 4, mc);
+        mark.drawDot(cc.p(px, py), 4, player === 1 ? new cc.Color(255,80,80,220) : new cc.Color(80,80,255,220));
         this.addChild(mark, 4);
         this.lastMark = mark;
-
         node.setScale(0);
         node.runAction(cc.sequence(cc.scaleTo(0.08, 1.18), cc.scaleTo(0.05, 1.0)));
     },
 
-    // ===== Kiểm tra thắng =====
+    // ===== Kiem tra thang =====
     _checkWin: function(row, col, p) {
         var dirs = [[0,1],[1,0],[1,1],[1,-1]];
         for (var d = 0; d < dirs.length; d++)
@@ -273,7 +319,21 @@ var CaroLayer = cc.Layer.extend({
     },
 
     _endGame: function(msg, result) {
-        this.gameOver = true;
+        this.gameOver     = true;
+        this.waitingForAI = false;
+        this._stopTimer();
+        if (result === 1) {
+            this.scorePlayer++;
+            this.nextFirst = 2;
+        } else if (result === -1) {
+            this.scoreMachine++;
+            this.nextFirst = 1;
+        } else {
+            this.nextFirst = this.firstPlayer;
+        }
+        this._updateScoreLbl();
+        if (result === 1)       playSound(res.SFX_Win);
+        else if (result === -1) playSound(res.SFX_Lose);
         var thiz = this;
         this.runAction(cc.sequence(
             cc.delayTime(0.45),
@@ -281,11 +341,15 @@ var CaroLayer = cc.Layer.extend({
         ));
     },
 
-    // ===== Popup kết quả =====
+    _updateScoreLbl: function() {
+        var s = L('caro_score').replace('{p}', this.scorePlayer).replace('{m}', this.scoreMachine);
+        this.scoreLbl.setString(s);
+    },
+
+    // ===== Popup ket qua =====
     _showPopup: function(msg, result) {
         var thiz = this;
         var size = cc.winSize;
-
         var overlay = new cc.LayerColor(new cc.Color(0, 0, 0, 160));
         overlay.setContentSize(size.width, size.height);
 
@@ -306,12 +370,18 @@ var CaroLayer = cc.Layer.extend({
         panel.addChild(border);
 
         var msgLbl = new cc.LabelTTF(msg, 'Arial', 56);
-        msgLbl.setPosition(pW/2, pH - 82);
+        msgLbl.setPosition(pW/2, pH - 72);
         msgLbl.setColor(bCol);
         panel.addChild(msgLbl);
 
-        var btnPlay = this._makeBtn('Chơi lại', new cc.Color(30, 120, 50));
-        var btnExit = this._makeBtn('Thoát',    new cc.Color(150, 40, 40));
+        var nextTxt = result === -1 ? L('caro_you_next') : (result === 1 ? L('caro_mach_next') : '');
+        var nextLbl = new cc.LabelTTF(nextTxt, 'Arial', 24);
+        nextLbl.setPosition(pW/2, pH - 120);
+        nextLbl.setColor(new cc.Color(200, 200, 200));
+        panel.addChild(nextLbl);
+
+        var btnPlay = this._makeBtn(L('play_again'), new cc.Color(30, 120, 50));
+        var btnExit = this._makeBtn(L('exit'),       new cc.Color(150, 40, 40));
         btnPlay.x = pW/2 - 110; btnPlay.y = 54;
         btnExit.x = pW/2 + 110; btnExit.y = 54;
         panel.addChild(btnPlay);
@@ -333,10 +403,8 @@ var CaroLayer = cc.Layer.extend({
             onTouchBegan: function() { return true; }
         });
         cc.eventManager.addListener(blocker, overlay);
-
         overlay.addChild(panel);
         cc.director.getRunningScene().addChild(overlay, 50);
-
         panel.setScale(0.1);
         panel.runAction(cc.sequence(cc.scaleTo(0.14, 1.08), cc.scaleTo(0.06, 1.0)));
     },
@@ -348,8 +416,25 @@ var CaroLayer = cc.Layer.extend({
         if (this.lastMark) { this.lastMark.removeFromParent(); this.lastMark = null; }
         for (var r = 0; r < this.N; r++)
             for (var c = 0; c < this.N; c++) this.board[r][c] = 0;
-        this.gameOver = false;
-        this.statusLbl.setString('Bạn đánh ● Đen  —  Máy đánh ○ Trắng');
+        this.gameOver     = false;
+        this.waitingForAI = false;
+        this.firstPlayer  = this.nextFirst;
+
+        if (this.firstPlayer === 1) {
+            this.statusLbl.setString(L('caro_your_turn'));
+            this._startTimer();
+        } else {
+            this.statusLbl.setString(L('caro_mach_first'));
+            this._stopTimer();
+            var thiz = this;
+            this.runAction(cc.sequence(
+                cc.delayTime(0.5),
+                cc.callFunc(function() {
+                    thiz.waitingForAI = true;
+                    thiz._aiMove();
+                })
+            ));
+        }
     },
 
     _makeBtn: function(text, color) {
