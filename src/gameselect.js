@@ -28,7 +28,7 @@ var GameSelectLayer = cc.Layer.extend({
         talaBtn.setPosition(cx + 230, cy);
         this.addChild(talaBtn, 6);
         talaBtn.addClickEventListener(function() {
-            cc.director.runScene(new TaLaScene());
+            cc.director.runScene(new TaLaLobbyScene());
         });
 
         // Mini Games
