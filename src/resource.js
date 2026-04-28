@@ -34,6 +34,7 @@ var res = {
     Login_png : "res/login.png",
     TextBg_png : "res/textbg.png",
     Back_png : "res/btn_back.png",
+    BtnPlayBg_png : "res/btn_play_bg.png",
     Help_png : "res/help.png",
     Forgot_png : "res/forgot_pass.png",
     SendMail_png: "res/send_mail.png",

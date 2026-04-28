@@ -42,7 +42,7 @@ var LoginLayer = cc.Layer.extend({
 
             // Nút Close
             var closeBtn = new ccui.Button();
-            closeBtn.setTitleText("Đóng");
+            closeBtn.setTitleText(L('popup_close'));
             closeBtn.setTitleFontSize(34);
             closeBtn.setTitleColor(new cc.Color(255, 255, 255));
             closeBtn.setContentSize(cc.size(180, 70));
@@ -118,11 +118,10 @@ var LoginLayer = cc.Layer.extend({
         inputPassword.setVisible(false);
         this.addChild(inputPassword, 7);  
 
-        var startBtn = new ccui.Button('res/button_play.png', '', '');
+        var startBtn = makeNiceBtn(L('play_now'), 230, 77, 32);
         startBtn.x = size.width / 2 + 200;
         startBtn.y = size.height / 2;
         startBtn.scale = 2;
-        startBtn.setZoomScale(-0.05);
 
         this.addChild(startBtn, 7);
 
@@ -143,25 +142,17 @@ var LoginLayer = cc.Layer.extend({
         forgotBtn.setVisible(false);
         this.addChild(forgotBtn, 7);
 
-        // Google login button
-        var ggBtn = new ccui.Button('res/btn_register_normal.png', '', '');
-        ggBtn.setScale9Enabled(true);
-        ggBtn.setCapInsets(cc.rect(4.2, 4.2, 2.1, 2.1));
-        ggBtn.setContentSize(cc.size(300, 80));
-        ggBtn.setTitleText('  Dang nhap Google');
-        ggBtn.setTitleFontSize(30);
-        ggBtn.setTitleColor(new cc.Color(255, 255, 255));
-        ggBtn.setColor(new cc.Color(219, 68, 55));
-        ggBtn.setZoomScale(-0.05);
-        ggBtn.x = size.width / 2 - 80;
-        ggBtn.y = size.height / 2 - 100;
+        // Google login button — same style & scale as startBtn, directly below it
+        var ggBtn = makeNiceBtn(L('google_login'), 230, 77, 26);
+        ggBtn.scale = 2;
+        ggBtn.x = startBtn.x;
+        ggBtn.y = startBtn.y - 175;
         this.addChild(ggBtn, 7);
 
         var ggProfile = GG.getProfile();
         if (ggProfile && ggProfile.name) {
             inputUsername.setString(ggProfile.name.substring(0, 10));
-            ggBtn.setTitleText('OK ' + ggProfile.name.substring(0, 12));
-            ggBtn.setColor(new cc.Color(40, 160, 60));
+            ggBtn.setTitleText(L('google_loggedin') + ': ' + ggProfile.name.substring(0, 8));
         }
 
         ggBtn.addClickEventListener(function() {
@@ -169,11 +160,10 @@ var LoginLayer = cc.Layer.extend({
             if (existing && existing.name) {
                 GG.logout();
                 inputUsername.setString('');
-                ggBtn.setTitleText('  Dang nhap Google');
-                ggBtn.setColor(new cc.Color(219, 68, 55));
+                ggBtn.setTitleText(L('google_login'));
                 return;
             }
-            ggBtn.setTitleText('Dang dang nhap...');
+            ggBtn.setTitleText(L('processing'));
             ggBtn.setEnabled(false);
             GG.login(
                 function(name) {
@@ -181,8 +171,7 @@ var LoginLayer = cc.Layer.extend({
                     cc.director.runScene(new GameSelectScene());
                 },
                 function() {
-                    ggBtn.setTitleText('  Dang nhap Google');
-                    ggBtn.setColor(new cc.Color(219, 68, 55));
+                    ggBtn.setTitleText(L('google_login'));
                     ggBtn.setEnabled(true);
                 }
             );
@@ -191,14 +180,14 @@ var LoginLayer = cc.Layer.extend({
         startBtn.addClickEventListener( function() {
 
             if (inputUsername.getString().trim() == '') {
-                showPopup("Mời bạn nhập tên!", function() {
+                showPopup(L('name_empty'), function() {
                     inputUsername.setFocused(true);
                 });
                 return;
             }
 
             if (inputUsername.getString().trim().length > 10) {
-                showPopup("Tên bạn quá dài!", function() {
+                showPopup(L('name_too_long'), function() {
                     inputUsername.setFocused(true);
                 });
                 return;

@@ -28,7 +28,7 @@ var LobbyLayer = cc.Layer.extend({
 
         for (var i = 0; i < positions.length; i++) {
             (function(p) {
-                var btn = _makeLobbyBtn(String(p.amount) + ' xu');
+                var btn = _makeLobbyBtn(String(p.amount) + ' ' + L('xu'));
                 btn.setPosition(p.x, p.y);
                 btn.addClickEventListener(function() {
                     cc.sys.localStorage.setItem("bet_amount", p.amount);
@@ -57,13 +57,8 @@ var LobbyLayer = cc.Layer.extend({
 });
 
 function _makeLobbyBtn(title) {
-    var btn = new ccui.Button("res/btn_register_normal.png", "", "");
-    btn.setScale9Enabled(true);
-    btn.setCapInsets(cc.rect(4.2, 4.2, 2.1, 2.1));
-    btn.setTitleText(title);
-    btn.setTitleFontSize(30);
+    var btn = makeNiceBtn(title, 220, 80, 30);
     btn.scale = 1.5;
-    btn.setZoomScale(-0.05);
     return btn;
 }
 

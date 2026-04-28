@@ -57,15 +57,7 @@ var GoLayer = cc.Layer.extend({
         this.capLbl.setColor(new cc.Color(200, 220, 200));
         this.addChild(this.capLbl, 5);
 
-        var passBtn = new ccui.Button('res/btn_register_normal.png', '', '');
-        passBtn.setScale9Enabled(true);
-        passBtn.setCapInsets(cc.rect(4.2, 4.2, 2.1, 2.1));
-        passBtn.setContentSize(cc.size(200, 68));
-        passBtn.setTitleText(L('go_pass'));
-        passBtn.setTitleFontSize(30);
-        passBtn.setTitleColor(new cc.Color(255, 255, 255));
-        passBtn.setColor(new cc.Color(70, 70, 110));
-        passBtn.setZoomScale(-0.05);
+        var passBtn = makeNiceBtn(L('go_pass'), 200, 68, 30);
         passBtn.setPosition(lx, cy - 80);
         this.addChild(passBtn, 6);
         passBtn.addClickEventListener(function() {
@@ -423,8 +415,8 @@ var GoLayer = cc.Layer.extend({
         scoreLbl.setColor(new cc.Color(220,220,180));
         panel.addChild(scoreLbl);
 
-        var btnPlay = this._makeBtn(L('play_again'), new cc.Color(30,120,50));
-        var btnExit = this._makeBtn(L('exit'),       new cc.Color(150,40,40));
+        var btnPlay = this._makeBtn(L('play_again'));
+        var btnExit = this._makeBtn(L('exit'));
         btnPlay.x = pW/2-120; btnPlay.y = 58;
         btnExit.x = pW/2+120; btnExit.y = 58;
         panel.addChild(btnPlay);
@@ -464,16 +456,8 @@ var GoLayer = cc.Layer.extend({
         this._updateCapLbl();
     },
 
-    _makeBtn: function(text, color) {
-        var btn = new ccui.Button('res/btn_register_normal.png', '', '');
-        btn.setScale9Enabled(true);
-        btn.setCapInsets(cc.rect(4.2,4.2,2.1,2.1));
-        btn.setContentSize(cc.size(200,70));
-        btn.setTitleText(text);
-        btn.setTitleFontSize(34);
-        btn.setTitleColor(new cc.Color(255,255,255));
-        btn.setColor(color);
-        btn.setZoomScale(-0.05);
+    _makeBtn: function(text) {
+        var btn = makeNiceBtn(text, 200, 70, 34);
         btn.scale = 1.2;
         return btn;
     }

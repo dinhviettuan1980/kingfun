@@ -9,6 +9,8 @@ frameworks/runtime-src/proj.android/
 frameworks/runtime-src/proj.linux/
 frameworks/runtime-src/proj.win32/
 
+frameworks/runtime-src/proj.ios_mac/
+
 # Xcode DerivedData / build artifacts
 *.xcuserstate
 xcuserdata/

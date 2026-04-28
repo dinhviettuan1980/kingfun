@@ -16,7 +16,7 @@ var GameSelectLayer = cc.Layer.extend({
         this.addChild(this.titleLbl, 5);
 
         // Ba Cây
-        var bacayBtn = this._makeBtn("Ba Cay", new cc.Color(30, 100, 180));
+        var bacayBtn = this._makeBtn(L('ba_cay'));
         bacayBtn.setPosition(cx - 230, cy);
         this.addChild(bacayBtn, 6);
         bacayBtn.addClickEventListener(function() {
@@ -24,7 +24,7 @@ var GameSelectLayer = cc.Layer.extend({
         });
 
         // Tá Lả
-        var talaBtn = this._makeBtn("Ta La", new cc.Color(160, 50, 30));
+        var talaBtn = this._makeBtn(L('ta_la'));
         talaBtn.setPosition(cx + 230, cy);
         this.addChild(talaBtn, 6);
         talaBtn.addClickEventListener(function() {
@@ -32,7 +32,7 @@ var GameSelectLayer = cc.Layer.extend({
         });
 
         // Mini Games
-        var funBtn = this._makeBtn("Mini Games", new cc.Color(30, 130, 100));
+        var funBtn = this._makeBtn(L('mini_games'));
         funBtn.setPosition(cx, cy - 150);
         this.addChild(funBtn, 6);
         funBtn.addClickEventListener(function() {
@@ -62,16 +62,8 @@ var GameSelectLayer = cc.Layer.extend({
         Settings.startMusic();
     },
 
-    _makeBtn: function(title, color) {
-        var btn = new ccui.Button("res/btn_register_normal.png", "", "");
-        btn.setScale9Enabled(true);
-        btn.setCapInsets(cc.rect(4.2, 4.2, 2.1, 2.1));
-        btn.setContentSize(cc.size(260, 100));
-        btn.setTitleText(title);
-        btn.setTitleFontSize(42);
-        btn.setTitleColor(new cc.Color(255, 255, 255));
-        btn.setColor(color);
-        btn.setZoomScale(-0.05);
+    _makeBtn: function(title) {
+        var btn = makeNiceBtn(title, 260, 100, 42);
         btn.scale = 1.3;
         return btn;
     },
@@ -110,21 +102,21 @@ var MiniGamesLayer = cc.Layer.extend({
         sub.setColor(new cc.Color(180, 220, 180));
         this.addChild(sub, 5);
 
-        var tttBtn = this._makeBtn("Tic-Tac-Toe", new cc.Color(30, 130, 100));
+        var tttBtn = this._makeBtn(L('tictactoe'));
         tttBtn.setPosition(cx, cy + 60);
         this.addChild(tttBtn, 6);
         tttBtn.addClickEventListener(function() {
             cc.director.runScene(new TicTacToeScene());
         });
 
-        var caroBtn = this._makeBtn("Co Caro", new cc.Color(120, 60, 160));
+        var caroBtn = this._makeBtn(L('co_caro'));
         caroBtn.setPosition(cx, cy - 60);
         this.addChild(caroBtn, 6);
         caroBtn.addClickEventListener(function() {
             cc.director.runScene(new CaroScene());
         });
 
-        var goBtn = this._makeBtn("Co Vay", new cc.Color(160, 100, 20));
+        var goBtn = this._makeBtn(L('co_vay'));
         goBtn.setPosition(cx, cy - 185);
         this.addChild(goBtn, 6);
         goBtn.addClickEventListener(function() {
@@ -140,16 +132,8 @@ var MiniGamesLayer = cc.Layer.extend({
         });
     },
 
-    _makeBtn: function(title, color) {
-        var btn = new ccui.Button("res/btn_register_normal.png", "", "");
-        btn.setScale9Enabled(true);
-        btn.setCapInsets(cc.rect(4.2, 4.2, 2.1, 2.1));
-        btn.setContentSize(cc.size(300, 110));
-        btn.setTitleText(title);
-        btn.setTitleFontSize(44);
-        btn.setTitleColor(new cc.Color(255, 255, 255));
-        btn.setColor(color);
-        btn.setZoomScale(-0.05);
+    _makeBtn: function(title) {
+        var btn = makeNiceBtn(title, 300, 110, 44);
         btn.scale = 1.3;
         return btn;
     }
