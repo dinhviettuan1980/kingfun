@@ -2,16 +2,11 @@ if (typeof playSound === 'undefined') {
     window.playSound = function(path, loop) { try { if (cc.audioEngine) cc.audioEngine.playEffect(path, loop || false); } catch(e) {} };
 }
 
-// Vẽ xấp xu gồm 3-5 đồng chồng lên nhau
 function addCoinStack(layer, cx, cy, zOrder) {
-    var count = 3 + Math.floor(Math.random() * 3); // 3-5 đồng
-    for (var i = 0; i < count; i++) {
-        var coin = new cc.Sprite("res/icon_free_gold.png");
-        coin.setScale(0.32);
-        coin.setPosition(cx + i * 5 - (count * 5) / 2, cy + i * 4);
-        coin.setRotation(-8 + i * 4);
-        layer.addChild(coin, (zOrder || 5) + i);
-    }
+    var img = new cc.Sprite("res/thoivang.png");
+    img.setScale(0.06);
+    img.setPosition(cx, cy);
+    layer.addChild(img, zOrder || 5);
 }
 
 // Vẽ border cho button — tọa độ anchor button là (0.5,0.5) nên center là (0,0)
@@ -240,9 +235,9 @@ var HelloWorldLayer = cc.Layer.extend({
         this.firstLoad = 1;
         this.dealerKey = 'me'; // người đầu tiên được chia bài
 
-        var tableSprite = new cc.Sprite("res/icon_free_gold.png");
+        var tableSprite = new cc.Sprite("res/thoivang.png");
         tableSprite.attr({ x: size.width / 2 - 610, y: size.height / 2 + 280 });
-        tableSprite.setScale(1);
+        tableSprite.setScale(0.06);
         tableSprite.setVisible(true);
         this.addChild(tableSprite, 1);
 
@@ -353,12 +348,12 @@ var HelloWorldLayer = cc.Layer.extend({
         }
         var meLabel = new cc.LabelTTF(this.me.name, "Arial", 38);
         meLabel.x = size.width / 2 + space + 100;
-        meLabel.y = size.height / 2 - 250;
+        meLabel.y = size.height / 2 - 242;
         meLabel.setHorizontalAlignment(cc.TEXT_ALIGNMENT_LEFT);
         this.addChild(meLabel, 6);
 
         var meAmountLabel = new cc.LabelTTF(this.me.wallet_money, "Arial", 20);
-        meAmountLabel.x = size.width / 2 + 120;
+        meAmountLabel.x = size.width / 2 + 105;
         meAmountLabel.y = size.height / 2 - 300;
         this.addChild(meAmountLabel, 5);
 
@@ -535,11 +530,11 @@ var HelloWorldLayer = cc.Layer.extend({
                     if (thiz.player1.isEnable && (thiz.firstLoad == 1)) {
                         var player1Label = new cc.LabelTTF(thiz.player1.name, "Arial", 38);
                         player1Label.x = size.width / 2 + 100;
-                        player1Label.y = size.height / 2 + 300;
+                        player1Label.y = size.height / 2 + 295;
                         thiz.addChild(player1Label, 5);
 
                         thiz.player1AmountLabel = new cc.LabelTTF(thiz.player1.wallet_money, "Arial", 20);
-                        thiz.player1AmountLabel.x = size.width / 2 + 120;
+                        thiz.player1AmountLabel.x = size.width / 2 + 105;
                         thiz.player1AmountLabel.y = size.height / 2 + 250;
                         thiz.addChild(thiz.player1AmountLabel, 5);
 
@@ -563,11 +558,11 @@ var HelloWorldLayer = cc.Layer.extend({
                     if (thiz.player2.isEnable && (thiz.firstLoad == 1)) {
                         var player2Label = new cc.LabelTTF(thiz.player2.name, "Arial", 38);
                         player2Label.x = size.width / 2 - 300;
-                        player2Label.y = size.height / 2 + 130;
+                        player2Label.y = size.height / 2 + 135;
                         thiz.addChild(player2Label, 5);
 
                         thiz.player2AmountLabel = new cc.LabelTTF(thiz.player2.wallet_money, "Arial", 20);
-                        thiz.player2AmountLabel.x = size.width / 2 - 280;
+                        thiz.player2AmountLabel.x = size.width / 2 - 295;
                         thiz.player2AmountLabel.y = size.height / 2 + 90;
                         thiz.addChild(thiz.player2AmountLabel, 5);
 
@@ -589,11 +584,11 @@ var HelloWorldLayer = cc.Layer.extend({
                     if (thiz.player3.isEnable) {
                         var player3Label = new cc.LabelTTF(thiz.player3.name, "Arial", 38);
                         player3Label.x = size.width / 2 + 500;
-                        player3Label.y = size.height / 2 + 130;
+                        player3Label.y = size.height / 2 + 135;
                         thiz.addChild(player3Label, 5);
 
                         thiz.player3AmountLabel = new cc.LabelTTF(thiz.player3.wallet_money, "Arial", 20);
-                        thiz.player3AmountLabel.x = size.width / 2 + 520;
+                        thiz.player3AmountLabel.x = size.width / 2 + 505;
                         thiz.player3AmountLabel.y = size.height / 2 + 90;
                         thiz.addChild(thiz.player3AmountLabel, 5);
 

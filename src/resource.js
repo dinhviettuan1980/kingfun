@@ -30,6 +30,7 @@ var res = {
     SFX_Win     : "res/audio/koiroylers-tada-fanfare-356032.mp3",
     SFX_Lose    : "res/audio/tuomas_data-game-over-39-199830.mp3",
 
+    ThoiVang_png : "res/thoivang.png",
     Start_png : "res/co_batdauchoi.png",
     Login_png : "res/login.png",
     TextBg_png : "res/textbg.png",

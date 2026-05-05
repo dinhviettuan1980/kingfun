@@ -12,18 +12,18 @@ var LobbyLayer = cc.Layer.extend({
         this.addChild(bg);
 
         var statusLabel = new cc.LabelTTF(
-            "Xin chao " + (cc.sys.localStorage.getItem("inputUsername") || "") + ", moi ban chon ban!",
+            "Xin chào " + (cc.sys.localStorage.getItem("inputUsername") || "") + ", mời bạn chọn bàn!",
             "Arial", 48
         );
-        statusLabel.x = cx; statusLabel.y = cy + 220;
+        statusLabel.x = cx + 200; statusLabel.y = cy + 220;
         this.addChild(statusLabel, 6);
 
         var gapX = 240, gapY = 150;
         var positions = [
-            { x: cx - gapX, y: cy + 60,          amount: 50  },
-            { x: cx + gapX, y: cy + 60,          amount: 100 },
-            { x: cx - gapX, y: cy - gapY + 60,   amount: 200 },
-            { x: cx + gapX, y: cy - gapY + 60,   amount: 500 }
+            { x: cx - gapX + 200, y: cy + 60,          amount: 50  },
+            { x: cx + gapX + 200, y: cy + 60,          amount: 100 },
+            { x: cx - gapX + 200, y: cy - gapY + 60,   amount: 200 },
+            { x: cx + gapX + 200, y: cy - gapY + 60,   amount: 500 }
         ];
 
         for (var i = 0; i < positions.length; i++) {

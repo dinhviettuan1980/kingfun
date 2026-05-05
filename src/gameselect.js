@@ -11,13 +11,13 @@ var GameSelectLayer = cc.Layer.extend({
         this.addChild(bg);
 
         this.titleLbl = new cc.LabelTTF(L('select_game'), "Arial", 52);
-        this.titleLbl.x = cx; this.titleLbl.y = cy + 200;
+        this.titleLbl.x = cx + 200; this.titleLbl.y = cy + 200;
         this.titleLbl.setColor(new cc.Color(255, 225, 50));
         this.addChild(this.titleLbl, 5);
 
         // Ba Cây
         var bacayBtn = this._makeBtn(L('ba_cay'));
-        bacayBtn.setPosition(cx - 230, cy);
+        bacayBtn.setPosition(cx - 30, cy);
         this.addChild(bacayBtn, 6);
         bacayBtn.addClickEventListener(function() {
             cc.director.runScene(new LobbyScene());
@@ -25,7 +25,7 @@ var GameSelectLayer = cc.Layer.extend({
 
         // Tá Lả
         var talaBtn = this._makeBtn(L('ta_la'));
-        talaBtn.setPosition(cx + 230, cy);
+        talaBtn.setPosition(cx + 430, cy);
         this.addChild(talaBtn, 6);
         talaBtn.addClickEventListener(function() {
             cc.director.runScene(new TaLaLobbyScene());
@@ -33,7 +33,7 @@ var GameSelectLayer = cc.Layer.extend({
 
         // Mini Games
         var funBtn = this._makeBtn(L('mini_games'));
-        funBtn.setPosition(cx, cy - 150);
+        funBtn.setPosition(cx + 200, cy - 150);
         this.addChild(funBtn, 6);
         funBtn.addClickEventListener(function() {
             cc.director.runScene(new MiniGamesScene());
